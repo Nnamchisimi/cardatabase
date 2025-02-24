@@ -1,18 +1,45 @@
 <?php
 include('db_connection.php');
 
-// Initialize search variable
+// Initialize variables
 $search_query = '';
+
 
 // Check if the search query is set in the URL
 if (isset($_GET['search'])) {
-    $search_query = $_GET['search'];
+    $search_query = mysqli_real_escape_string($conn, $_GET['search']);  // sanitize input
     $sql = "SELECT * FROM cars WHERE customer_name LIKE '%$search_query%'";
 } else {
     $sql = "SELECT * FROM cars";
 }
 
 $result = $conn->query($sql);
+
+// Check if the query executed successfully
+if (!$result) {
+    die("Error in query execution: " . $conn->error);
+}
+
+// Handle the unit and value form submission
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    // Get the selected unit and entered value
+    $unit = isset($_POST['unit']) ? $_POST['unit'] : '';
+    $value = isset($_POST['value']) ? $_POST['value'] : '';
+
+    // Handle form submission
+    if ($unit && $value) {
+        // Example: Insert data into database
+        $sql = "INSERT INTO cars (km_mile, unit) VALUES ('$value', '$unit')";
+        
+        if ($conn->query($sql) === TRUE) {
+            $success_message = "Data successfully inserted!";
+        } else {
+            $error_message = "Error: " . $conn->error;
+        }
+    } else {
+        $error_message = "Please provide both a value and unit!";
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -187,7 +214,16 @@ $result = $conn->query($sql);
             </div>
         </form>
 
+        
+
         <a href="index.php" class="btn btn-secondary">Add New Car</a>
+
+        <!-- Display Success/Error Message -->
+        <?php if (isset($success_message)): ?>
+            <p class="success-message"><?php echo $success_message; ?></p>
+        <?php elseif (isset($error_message)): ?>
+            <p class="error-message"><?php echo $error_message; ?></p>
+        <?php endif; ?>
 
         <?php if ($result->num_rows > 0): ?>
             <table>
