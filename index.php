@@ -80,157 +80,290 @@ $conn->close();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Car Database</title>
-    <script>
-        // Car models based on brands
-        const carModels = {
-            "Chrysler": ["300 C", "300 M", "Concorde", "Crossfire", "LHS", "Neon", "PT Cruiser", "Sebring", "Stratus"],
-            "Audi": ["A3", "A4", "A6", "Q5", "Q7", "TT"],
-            "BMW": ["X1", "X3", "X5", "3 Series", "5 Series", "7 Series"],
-            "Mercedes-Benz": ["C-Class", "E-Class", "S-Class", "GLA", "GLC", "GLE"],
-            "Toyota": ["Corolla", "Camry", "RAV4", "Hilux", "Land Cruiser"],
-            "Volkswagen": ["Golf", "Passat", "Polo", "Tiguan", "Touareg"],
-            "Nissan": ["Series", "350 Z", "370 Z", "Name", "Almera", "Altima", "Bluebird", "Cedric", "Cube", "Datsun", "Dayz", "Figaro", "GT-R", "Latio", "Laurel Altima", "Leaf", "March", "Maxima", "Micra", "Note", "NV200", "NV350", "NX Coupe", "Pino", 
-                        "Primera", "Pulsar", "Serena", "Silvia", "Skyline", "Sunny", "Sylphy", "Teana", "Tiida", "Wingroad"]
-        };
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: url('static/images/img2.jpg') no-repeat center center fixed;
+            background-size: cover;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow: hidden; /* Remove scrollbars */
+        }
 
-        // Function to update models based on brand selection
-        function updateModels() {
-            const brandDropdown = document.getElementById("brand");
-            const modelDropdown = document.getElementById("model");
+        header {
+            background-color: #000;
+            color: #fff;
+            padding: 20px 0;
+            text-align: center;
+        }
 
-            // Clear current options
-            modelDropdown.innerHTML = '<option value="">Select Model</option>';
+        header h1 {
+            font-size: 3rem;
+            margin: 0;
+        }
 
-            // Get selected brand
-            const selectedBrand = brandDropdown.value;
+        header h2 {
+            font-size: 1.5rem;
+            margin: 5px 0;
+            color: #aaa;
+        }
 
-            // Populate models if brand selected
-            if (selectedBrand && carModels[selectedBrand]) {
-                carModels[selectedBrand].forEach(model => {
-                    const option = document.createElement("option");
-                    option.value = model;
-                    option.textContent = model;
-                    modelDropdown.appendChild(option);
-                });
+        .container {
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 30px;
+            border-radius: 15px;
+            width: 100%;
+            max-width: 100%;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            gap: 20px;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        form {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        input, select {
+            padding: 12px;
+            font-size: 1em;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        button {
+             background-color: #000;
+            color: white;
+            padding: 14px 28px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 200px; /* Optional, adjust the width if needed */
+        }
+
+        button:hover {
+            background-color: #555;
+        }
+
+        .action-links {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .action-links a {
+            text-decoration: none;
+            color: white;
+            background-color: #45a049;
+            padding: 12px 24px;
+            font-size: 1.1em;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        .action-links a:hover {
+            background-color: #555;
+        }
+
+        footer {
+            background-color: #000;
+            color: white;
+            text-align: center;
+            padding: 15px;
+            width: 100%;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                width: 100%;
+            }
+
+            form {
+                grid-template-columns: 1fr;
+            }
+
+            button {
+                width: 100%;
+            }
+
+            .action-links {
+                flex-direction: column;
+                align-items: center;
             }
         }
-    </script>
+    </style>
 </head>
-<body style="font-family: Arial, sans-serif; background: #f4f4f4; padding: 20px;">
-    <div style="max-width: 700px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
-        <h1 style="text-align: center; color: #333;">Car Database</h1>
-        <h2 style="text-align: center; color: #555;"><?php echo isset($_GET['edit_id']) ? 'Edit Car' : 'Add New Car'; ?></h2>
+<body>
 
-        <form action="index.php<?php echo isset($_GET['edit_id']) ? '?edit_id=' . $_GET['edit_id'] : ''; ?>" method="post" style="display: grid; gap: 15px;">
-            <?php 
-            $fields = [
-                'customer_name' => 'Customer Name', 'plate' => 'Plate', 'km_mile' => 'Mile/KM',
-                'accident_visual' => 'Accident Visual', 'accident_tramer' => 'Accident Tramer', 
-                'msf' => 'MSF', 'dsf' => 'DSF', 'package' => 'Package', 'color' => 'Color', 
-                'engine' => 'Engine',
-                'expense_detail' => 'Expense Detail', 'current_expense' => 'Current Total Expense'
-            ];
+<header>
+    <h1>Car Database</h1>
+    <h2><?php echo isset($_GET['edit_id']) ? 'Edit Car' : 'SERHAN KOMBOS OTOMOTIV'; ?></h2>
+</header>
 
-            foreach ($fields as $id => $label) {
-                echo "
-                    <div>
-                        <label for='$id'>$label:</label><br>
-                        <input type='text' id='$id' name='$id' value='" . ($$id ?? '') . "' required style='width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px;' />
-                    </div>
-                ";
-            }
-            ?>
+<div class="container">
+    <form action="index.php<?php echo isset($_GET['edit_id']) ? '?edit_id=' . $_GET['edit_id'] : ''; ?>" method="post">
+        <?php 
+        $fields = [
+            'customer_name' => 'Customer Name', 'plate' => 'Plate', 'km_mile' => 'Mile/KM', 'accident_tramer' => 'Accident Tramer', 
+            'msf' => 'MSF', 'dsf' => 'DSF', 'package' => 'Package', 'color' => 'Color', 
+            'engine' => 'Engine', 'expense_detail' => 'Expense Detail', 'current_expense' => 'Current Total Expense'
+        ];
 
-             
-            <!-- Dropdown for GEAR -->
-            <div>
-                <label for="gear">GEAR:</label><br>
-                <select id="gear" name="gear" onchange="updateModels()" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px;">
-                    <option value="">Select Gear Type</option>
-                    <!-- Include brands in the dropdown -->
-                    <?php
-                    $gear = ["MANUAL/DUZ","AUTOMATIC/OTOMATİK"];
-                    foreach ($gear as $gearOption) {
-                        $selected = ($gear == $gearOption) ? 'selected' : '';
-                        echo "<option value='$gearOption' $selected>$gearOption</option>";
-                    }
-                    ?>
-                </select>
-            </div>
+        foreach ($fields as $id => $label) {
+            echo "
+                <div class='form-group'>
+                    <label for='$id'>$label:</label>
+                    <input type='text' id='$id' name='$id' value='" . ($$id ?? '') . "' required />
+                </div>
+            ";
+        }
+        ?>
 
-            
-            <!-- Dropdown for FUEL -->
-            <div>
-                <label for="fuel">FUEL:</label><br>
-                <select id="fuel" name="fuel" onchange="updateModels()" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px;">
-                    <option value=""></option>
-                    <!-- Include brands in the dropdown -->
-                    <?php
-                    $fuel = ["PETROL/BENZENE","DIESEL/DIZEL"];
-                    foreach ($fuel as $fuelOption) {
-                        $selected = ($fuel == $fuelOption) ? 'selected' : '';
-                        echo "<option value='$fuelOption' $selected>$fuelOption</option>";
-                    }
-                    ?>
-                </select>
-            </div>
-
-            <!-- Dropdown for Brand -->
-            <div>
-                <label for="brand">Brand:</label><br>
-                <select id="brand" name="brand" onchange="updateModels()" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px;">
-                    <option value="">Select Brand</option>
-                    <!-- Include brands in the dropdown -->
-                    <?php
-                    $brands = ["Acura", "Alfa Romeo", "Audi", "BMW", "Chevrolet", "Chrysler", "Citroen", "Dodge", "Fiat", "Ford", "Honda", "Hyundai", "Infiniti", "Jaguar", "Kia", "Lexus", "Mazda", "Mercedes-Benz", "Nissan", "Peugeot", "Renault", "Subaru", "Toyota", "Volkswagen"];
-                    foreach ($brands as $brandOption) {
-                        $selected = ($brand == $brandOption) ? 'selected' : '';
-                        echo "<option value='$brandOption' $selected>$brandOption</option>";
-                    }
-                    ?>
-                </select>
-            </div>
-
-            <!-- Dropdown for Model -->
-            <div>
-                <label for="model">Model:</label><br>
-                <select id="model" name="model" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px;">
-                    <option value="">Select Model</option>
-                    <?php 
-                    // Only show models for the selected brand
-                    if ($brand) {
-                        // Define the models for each brand
-                        $carModels = [
-                            "Chrysler" => ["300 C", "300 M", "Concorde", "Crossfire", "LHS", "Neon", "PT Cruiser", "Sebring", "Stratus"],
-                            "Audi" => ["A3", "A4", "A6", "Q5", "Q7", "TT"],
-                            "BMW" => ["X1", "X3", "X5", "3 Series", "5 Series", "7 Series"],
-                            "Mercedes-Benz" => ["C-Class", "E-Class", "S-Class", "GLA", "GLC", "GLE"],
-                            "Toyota" => ["Corolla", "Camry", "RAV4", "Hilux", "Land Cruiser"],
-                            "Volkswagen" => ["Golf", "Passat", "Polo", "Tiguan", "Touareg"],
-                            "Nissan" => ["Series", "350 Z", "370 Z", "Name", "Almera", "Altima", "Bluebird", "Cedric", "Cube", "Datsun", "Dayz", "Figaro", "GT-R", "Latio", "Laurel Altima", "Leaf", "March", "Maxima", "Micra", "Note", "NV200", "NV350", "NX Coupe", "Pino", 
-                                        "Primera", "Pulsar", "Serena", "Silvia", "Skyline", "Sunny", "Sylphy", "Teana", "Tiida", "Wingroad"]
-                        ];
-                        
-                        foreach ($carModels[$brand] as $modelOption) {
-                            $selected = ($model == $modelOption) ? 'selected' : '';
-                            echo "<option value='$modelOption' $selected>$modelOption</option>";
-                        }
-                    }
-                    ?>
-                </select>
-            </div>
-
-            <div style="text-align: center;">
-                <button type="submit" style="padding: 10px 20px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer;">
-                    <?php echo isset($_GET['edit_id']) ? 'Update Car' : 'Add Car'; ?>
-                </button>
-            </div>
-        </form>
-
-        <br>
-        <div style="text-align: center;">
-            <a href="display.php" style="text-decoration: none; padding: 10px 20px; background: #f44336; color: white; border-radius: 5px;">View Submitted Cars</a>
+        <div class="form-group">
+            <label for="gear">Gear:</label>
+            <select id="gear" name="gear">
+                <option value="" disabled <?php echo empty($gear) ? 'selected' : ''; ?>>Select</option>
+                <?php
+                $gearOptions = ["MANUAL/DUZ", "AUTOMATIC/OTOMATİK"];
+                foreach ($gearOptions as $gearOption) {
+                    $selected = ($gear == $gearOption) ? 'selected' : '';
+                    echo "<option value='$gearOption' $selected>$gearOption</option>";
+                }
+                ?>
+            </select>
         </div>
+
+        <div class="form-group">
+            <label for="accident_visual">Accident Visual:</label>
+            <select id="accident_visual" name="accident_visual" required>
+                <option value="" disabled <?php echo empty($accident_visual) ? 'selected' : ''; ?>>Select</option>
+                <?php
+                $accident_visualOptions = ["CRITICAL DAMAGE", "MINOR DAMAGE", "NO VISUAL DAMAGE"];
+                foreach ($accident_visualOptions as $accident_visualOption) {
+                    $selected = ($accident_visual == $accident_visualOption) ? 'selected' : '';
+                    echo "<option value='$accident_visualOption' $selected>$accident_visualOption</option>";
+                }
+                ?>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="fuel">Fuel:</label>
+            <select id="fuel" name="fuel">
+                <option value="" disabled <?php echo empty($fuel) ? 'selected' : ''; ?>>Select</option>
+                <?php
+                $fuelOptions = ["PETROL/BENZENE", "DIESEL/DIZEL"];
+                foreach ($fuelOptions as $fuelOption) {
+                    $selected = ($fuel == $fuelOption) ? 'selected' : '';
+                    echo "<option value='$fuelOption' $selected>$fuelOption</option>";
+                }
+                ?>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="brand">Brand:</label>
+            <select id="brand" name="brand" onchange="updateModels()">
+                <option value="" disabled <?php echo empty($brand) ? 'selected' : ''; ?>>Select</option>
+                <?php
+                $brands = ["Acura", "Alfa Romeo", "Audi", "BMW", "Chevrolet", "Chrysler", "Citroen", "Dodge", "Fiat", "Ford", "Honda", "Hyundai", "Infiniti", "Jaguar", "Kia", "Lexus", "Mazda", "Mercedes-Benz", "Nissan", "Peugeot", "Renault", "Subaru", "Toyota", "Volkswagen"];
+                foreach ($brands as $brandOption) {
+                    $selected = ($brand == $brandOption) ? 'selected' : '';
+                    echo "<option value='$brandOption' $selected>$brandOption</option>";
+                }
+                ?>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="model">Model:</label>
+            <select id="model" name="model">
+                <option value="" disabled <?php echo empty($model) ? 'selected' : ''; ?>>Select</option>
+                <!-- Models will be dynamically populated -->
+            </select>
+        </div>
+
+        <button type="submit"><?php echo isset($_GET['edit_id']) ? 'Update Car' : 'Add Car'; ?></button>
+    </form>
+
+    <div class="action-links">
+        <a href="display.php">View Submitted Cars</a>
+        <a href="home.php">Back To Home</a>
     </div>
+</div>
+
+<script>
+    const carModels = {
+        "Chrysler": ["300 C", "300 M", "Concorde", "Crossfire", "LHS", "Neon", "PT Cruiser", "Sebring", "Stratus"],
+        "Audi": ["A3", "A4", "A6", "Q5", "Q7", "TT"],
+        "BMW": ["X1", "X3", "X5", "3 Series", "5 Series", "7 Series"],
+        "Mercedes-Benz": ["C-Class", "E-Class", "S-Class", "GLA", "GLC", "GLE"],
+        "Toyota": ["Corolla", "Camry", "RAV4", "Hilux", "Land Cruiser"],
+        "Volkswagen": ["Golf", "Passat", "Polo", "Tiguan", "Touareg"],
+        "Nissan": ["350 Z", "370 Z", "Almera", "Altima", "Bluebird", "Cedric", "Cube", "Datsun"]
+    };
+
+    function updateModels() {
+    const brandDropdown = document.getElementById("brand");
+    const modelDropdown = document.getElementById("model");
+
+    modelDropdown.innerHTML = '<option value="" disabled>Select</option>';
+
+    const selectedBrand = brandDropdown.value; // Get selected brand
+    const selectedModel = "<?php echo $model; ?>"; // Get model from PHP
+
+    if (selectedBrand && carModels[selectedBrand]) {
+        carModels[selectedBrand].forEach(model => {
+            const option = document.createElement("option");
+            option.value = model;
+            option.textContent = model;
+
+            // Automatically select the model from the database
+            if (model === selectedModel) {
+                option.selected = true;
+            }
+
+            modelDropdown.appendChild(option);
+        });
+    }
+}
+
+
+
+    
+    window.onload = updateModels;
+</script>
+
+<footer>
+    <p>&copy; 2025 SERHAN KOMBOS OTOMOTIV</p>
+</footer>
+
 </body>
 </html>
