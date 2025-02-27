@@ -334,12 +334,14 @@ $conn->close();
     const brandDropdown = document.getElementById("brand");
     const modelDropdown = document.getElementById("model");
 
-    modelDropdown.innerHTML = '<option value="" disabled>Select</option>';
+    // Always add the "Select" option at the top
+    modelDropdown.innerHTML = '<option value="" disabled selected>Select</option>';
 
     const selectedBrand = brandDropdown.value; // Get selected brand
     const selectedModel = "<?php echo $model; ?>"; // Get model from PHP
 
     if (selectedBrand && carModels[selectedBrand]) {
+        // Loop through and add models based on selected brand
         carModels[selectedBrand].forEach(model => {
             const option = document.createElement("option");
             option.value = model;
@@ -354,6 +356,7 @@ $conn->close();
         });
     }
 }
+
 
 
 

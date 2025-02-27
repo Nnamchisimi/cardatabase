@@ -146,12 +146,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         .form-group {
             margin-bottom: 15px;
         }
-
         .input-field {
             padding: 8px;
-            width: 100%;
+            width: 50%;
             font-size: 1rem;
-            margin: 5px 0;
+            margin: 2.5px 0;
         }
 
         .btn {
