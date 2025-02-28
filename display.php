@@ -4,7 +4,6 @@ include('db_connection.php');
 // Initialize variables
 $search_query = '';
 
-
 // Check if the search query is set in the URL
 if (isset($_GET['search'])) {
     $search_query = mysqli_real_escape_string($conn, $_GET['search']);  // sanitize input
@@ -20,26 +19,6 @@ if (!$result) {
     die("Error in query execution: " . $conn->error);
 }
 
-// Handle the unit and value form submission
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // Get the selected unit and entered value
-    $unit = isset($_POST['unit']) ? $_POST['unit'] : '';
-    $value = isset($_POST['value']) ? $_POST['value'] : '';
-
-    // Handle form submission
-    if ($unit && $value) {
-        // Example: Insert data into database
-        $sql = "INSERT INTO cars (km_mile, unit) VALUES ('$value', '$unit')";
-        
-        if ($conn->query($sql) === TRUE) {
-            $success_message = "Data successfully inserted!";
-        } else {
-            $error_message = "Error: " . $conn->error;
-        }
-    } else {
-        $error_message = "Please provide both a value and unit!";
-    }
-}
 ?>
 
 <!DOCTYPE html>
@@ -213,8 +192,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             </div>
         </form>
 
-        
-
         <a href="index.php" class="btn btn-secondary">Add New Car</a>
 
         <!-- Display Success/Error Message -->
@@ -244,11 +221,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <th>Fuel</th>
                         <th>Expense Detail</th>
                         <th>Current Total Expense</th>
+                        <th>Image</th> <!-- New column for image -->
                     </tr>
                 </thead>
                 <tbody>
                     <?php
                     while($row = $result->fetch_assoc()) {
+                        // Check if an image is uploaded for the car
+                        $image_path = $row['image'] ? 'uploads/' . $row['image'] : 'uploads/default.jpg'; // Default image if none is uploaded
+
                         echo "<tr>
                             <td>" . $row['customer_name'] . "</td>
                             <td>" . $row['plate'] . "</td>
@@ -266,6 +247,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             <td>" . $row['fuel'] . "</td>
                             <td>" . $row['expense_detail'] . "</td>
                             <td>" . $row['current_total_expense'] . "</td>
+                            <td><img src='" . $image_path . "' alt='Car Image' style='width: 100px; height: auto;'></td> <!-- Display image -->
                             <td><a href='index.php?edit_id=" . $row['id'] . "' class='btn btn-edit'>Edit</a></td>
                             <td><a href='delete.php?id=" . $row['id'] . "' class='btn btn-delete' onclick=\"return confirm('Are you sure you want to delete this record?');\">Delete</a></td>
                         </tr>";

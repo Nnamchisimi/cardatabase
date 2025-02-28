@@ -25,10 +25,11 @@ if (isset($_GET['edit_id'])) {
         $fuel = $row['fuel'];
         $expense_detail = $row['expense_detail'];
         $current_expense = $row['current_total_expense'];
+        $image = $row['image']; // Get the image filename if exists
     }
 } else {
     // Default values for a new car entry
-    $customer_name = $plate = $brand = $model = $km_mile = $accident_visual = $accident_tramer = $msf = $dsf = $package = $color = $engine = $gear = $fuel = $expense_detail = $current_expense = '';
+    $customer_name = $plate = $brand = $model = $km_mile = $accident_visual = $accident_tramer = $msf = $dsf = $package = $color = $engine = $gear = $fuel = $expense_detail = $current_expense = $image = '';
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -49,9 +50,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $expense_detail = $_POST['expense_detail'];
     $current_expense = $_POST['current_expense'];
 
+    // Handle file upload
+    if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
+        $image = $_FILES['image']['name'];
+        $image_tmp = $_FILES['image']['tmp_name'];
+        $image_folder = 'uploads/' . $image;
+        move_uploaded_file($image_tmp, $image_folder);
+    } elseif (isset($_GET['edit_id'])) {
+        // Keep the existing image if it's being updated and no new image is uploaded
+        $image = $row['image'];
+    }
+
     if (isset($_GET['edit_id'])) {
         // Update the car details
-        $sql = "UPDATE cars SET customer_name = '$customer_name', plate = '$plate', brand = '$brand', model = '$model', km_mile = '$km_mile', accident_visual = '$accident_visual', accident_tramer = '$accident_tramer', msf = '$msf', dsf = '$dsf', package = '$package', color = '$color', engine = '$engine', gear = '$gear', fuel = '$fuel', expense_detail = '$expense_detail', current_total_expense = '$current_expense' WHERE id = '$edit_id'";
+        $sql = "UPDATE cars SET customer_name = '$customer_name', plate = '$plate', brand = '$brand', model = '$model', km_mile = '$km_mile', accident_visual = '$accident_visual', accident_tramer = '$accident_tramer', msf = '$msf', dsf = '$dsf', package = '$package', color = '$color', engine = '$engine', gear = '$gear', fuel = '$fuel', expense_detail = '$expense_detail', current_total_expense = '$current_expense', image = '$image' WHERE id = '$edit_id'";
         if ($conn->query($sql) === TRUE) {
             // Clear form after successful submission
             unset($customer_name, $plate, $brand, $model, $km_mile, $accident_visual, $accident_tramer, $msf, $dsf, $package, $color, $engine, $gear, $fuel, $expense_detail, $current_expense);
@@ -60,8 +72,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     } else {
         // Insert new car data
-        $sql = "INSERT INTO cars (customer_name, plate, brand, model, km_mile, accident_visual, accident_tramer, msf, dsf, package, color, engine, gear, fuel, expense_detail, current_total_expense) 
-        VALUES ('$customer_name', '$plate', '$brand', '$model', '$km_mile', '$accident_visual', '$accident_tramer', '$msf', '$dsf', '$package', '$color', '$engine', '$gear', '$fuel', '$expense_detail', '$current_expense')";
+        $sql = "INSERT INTO cars (customer_name, plate, brand, model, km_mile, accident_visual, accident_tramer, msf, dsf, package, color, engine, gear, fuel, expense_detail, current_total_expense, image) 
+        VALUES ('$customer_name', '$plate', '$brand', '$model', '$km_mile', '$accident_visual', '$accident_tramer', '$msf', '$dsf', '$package', '$color', '$engine', '$gear', '$fuel', '$expense_detail', '$current_expense', '$image')";
         if ($conn->query($sql) === TRUE) {
             // Clear form after successful submission
             unset($customer_name, $plate, $brand, $model, $km_mile, $accident_visual, $accident_tramer, $msf, $dsf, $package, $color, $engine, $gear, $fuel, $expense_detail, $current_expense);
@@ -91,7 +103,7 @@ $conn->close();
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            overflow: hidden; /* Remove scrollbars */
+            overflow: hidden;
         }
 
         header {
@@ -163,7 +175,7 @@ $conn->close();
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            width: 200px; /* Optional, adjust the width if needed */
+            width: 200px;
         }
 
         button:hover {
@@ -228,7 +240,7 @@ $conn->close();
 </header>
 
 <div class="container">
-    <form action="index.php<?php echo isset($_GET['edit_id']) ? '?edit_id=' . $_GET['edit_id'] : ''; ?>" method="post">
+    <form action="index.php<?php echo isset($_GET['edit_id']) ? '?edit_id=' . $_GET['edit_id'] : ''; ?>" method="post" enctype="multipart/form-data">
         <?php 
         $fields = [
             'customer_name' => 'Customer Name', 'plate' => 'Plate', 'km_mile' => 'Mile/KM', 'accident_tramer' => 'Accident Tramer', 
@@ -306,8 +318,18 @@ $conn->close();
             <label for="model">Model:</label>
             <select id="model" name="model">
                 <option value="" disabled <?php echo empty($model) ? 'selected' : ''; ?>>Select</option>
-                <!-- Models will be dynamically populated -->
             </select>
+        </div>
+
+        <!-- File Upload -->
+        <div class="form-group">
+            <label for="image">Car Image:</label>
+            <input type="file" id="image" name="image" />
+            <?php
+            if (!empty($image)) {
+                echo "<p>Current Image: <img src='uploads/$image' alt='Car Image' width='100' /></p>";
+            }
+            ?>
         </div>
 
         <button type="submit"><?php echo isset($_GET['edit_id']) ? 'Update Car' : 'Add Car'; ?></button>
@@ -357,15 +379,11 @@ $conn->close();
     }
 }
 
-
-
-
-    
     window.onload = updateModels;
 </script>
 
 <footer>
-    <p>&copy; 2025 SERHAN KOMBOS OTOMOTIV</p>
+    <p>&copy; 2025 Car Database System. All rights reserved.</p>
 </footer>
 
 </body>
