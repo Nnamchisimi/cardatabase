@@ -66,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $sql = "UPDATE cars SET customer_name = '$customer_name', plate = '$plate', brand = '$brand', model = '$model', km_mile = '$km_mile', accident_visual = '$accident_visual', accident_tramer = '$accident_tramer', msf = '$msf', dsf = '$dsf', package = '$package', color = '$color', engine = '$engine', gear = '$gear', fuel = '$fuel', expense_detail = '$expense_detail', current_total_expense = '$current_expense', image = '$image' WHERE id = '$edit_id'";
         if ($conn->query($sql) === TRUE) {
             // Clear form after successful submission
-            unset($customer_name, $plate, $brand, $model, $km_mile, $accident_visual, $accident_tramer, $msf, $dsf, $package, $color, $engine, $gear, $fuel, $expense_detail, $current_expense);
+            unset($customer_name, $plate, $brand, $model, $km_mile, $accident_visual, $accident_tramer, $msf, $dsf, $package, $color, $engine, $gear, $fuel, $expense_detail, $current_expense,$image);
         } else {
             echo "Error: " . $conn->error;
         }
@@ -260,7 +260,7 @@ $conn->close();
 
         <div class="form-group">
             <label for="gear">Gear:</label>
-            <select id="gear" name="gear">
+            <select id="gear" name="gear"  required>
                 <option value="" disabled <?php echo empty($gear) ? 'selected' : ''; ?>>Select</option>
                 <?php
                 $gearOptions = ["MANUAL/DUZ", "AUTOMATIC/OTOMATİK"];
@@ -288,7 +288,7 @@ $conn->close();
 
         <div class="form-group">
             <label for="fuel">Fuel:</label>
-            <select id="fuel" name="fuel">
+            <select id="fuel" name="fuel"  required>
                 <option value="" disabled <?php echo empty($fuel) ? 'selected' : ''; ?>>Select</option>
                 <?php
                 $fuelOptions = ["PETROL/BENZENE", "DIESEL/DIZEL"];
@@ -316,22 +316,25 @@ $conn->close();
 
         <div class="form-group">
             <label for="model">Model:</label>
-            <select id="model" name="model">
+            <select id="model" name="model"  >
                 <option value="" disabled <?php echo empty($model) ? 'selected' : ''; ?>>Select</option>
             </select>
         </div>
 
         <!-- File Upload -->
-        <div class="form-group">
-            <label for="image">Car Image:</label>
-            <input type="file" id="image" name="image" />
-            <?php
-            if (!empty($image)) {
-                echo "<p>Current Image: <img src='uploads/$image' alt='Car Image' width='100' /></p>";
-            }
-            ?>
-        </div>
+      <!-- File Upload -->
+<div class="form-group">
+    <label for="image">Car Image:</label>
+    <input type="file" id="image" name="image" <?php echo isset($_GET['edit_id']) ? '' : 'required'; ?> />
+    <?php
+    if (!empty($image) && $_SERVER['REQUEST_METHOD'] == 'GET' && isset($_GET['edit_id'])) {
+        echo "<p>Current Image: <img src='uploads/$image' alt='Car Image' width='100' /></p>";
+    }
+    ?>
+</div>
 
+
+        
         <button type="submit"><?php echo isset($_GET['edit_id']) ? 'Update Car' : 'Add Car'; ?></button>
     </form>
 
@@ -380,6 +383,15 @@ $conn->close();
 }
 
     window.onload = updateModels;
+    
+
+       // Place the Confirmation Popup Here 👇👇👇
+       document.querySelector("form").onsubmit = function (event) {
+        const confirmation = confirm("Are you sure you want to submit the data?");
+        if (!confirmation) {
+            event.preventDefault(); // Stops the submission if user clicks Cancel
+        }
+    };
 </script>
 
 <footer>

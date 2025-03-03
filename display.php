@@ -18,7 +18,6 @@ $result = $conn->query($sql);
 if (!$result) {
     die("Error in query execution: " . $conn->error);
 }
-
 ?>
 
 <!DOCTYPE html>
@@ -26,7 +25,7 @@ if (!$result) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Part Details Result</title>
+    <title>cardatabase</title>
     <link rel="icon" href="https://kombosapp.pythonanywhere.com/static/favicon.ico" type="image/x-icon">
     <style>
         body {
@@ -125,6 +124,7 @@ if (!$result) {
         .form-group {
             margin-bottom: 15px;
         }
+
         .input-field {
             padding: 8px;
             width: 50%;
@@ -136,6 +136,48 @@ if (!$result) {
             padding: 10px 15px;
             font-size: 1rem;
             cursor: pointer;
+        }
+
+        .popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            width: 90%;
+            max-width: 600px;
+            text-align: center;
+            z-index: 9999;
+            border-radius: 10px;
+        }
+
+        .popup img {
+            width: 50%; /* Default size */
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        .popup button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: black;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 9998;
         }
 
         .btn-primary {
@@ -205,6 +247,7 @@ if (!$result) {
             <table>
                 <thead>
                     <tr>
+                        <th>Image</th>
                         <th>Customer Name</th>
                         <th>Plate</th>
                         <th>Brand</th>
@@ -221,7 +264,7 @@ if (!$result) {
                         <th>Fuel</th>
                         <th>Expense Detail</th>
                         <th>Current Total Expense</th>
-                        <th>Image</th> <!-- New column for image -->
+                         <!-- New column for image -->
                     </tr>
                 </thead>
                 <tbody>
@@ -231,6 +274,10 @@ if (!$result) {
                         $image_path = $row['image'] ? 'uploads/' . $row['image'] : 'uploads/default.jpg'; // Default image if none is uploaded
 
                         echo "<tr>
+                            <td>
+                                <img src='" . $image_path . "' style='width: 100px;' onclick='showDetails(\"" . $row['customer_name'] . "\", \"" . $row['plate'] . "\", \"" . $row['brand'] . "\", \"" . $row['model'] . "\", \"" . $row['km_mile'] . "\", \"" . $row['accident_visual'] . "\", \"" . $row['accident_tramer'] . "\", \"" . $row['msf'] . "\", \"" . $row['dsf'] . "\", \"" . $row['package'] . "\", \"" . $row['color'] . "\", \"" . $row['engine'] . "\", \"" . $row['gear'] . "\", \"" . $row['fuel'] . "\", \"" . $row['expense_detail'] . "\", \"" . $row['current_total_expense'] . "\", \"" . $image_path . "\")'>
+                            </td>
+
                             <td>" . $row['customer_name'] . "</td>
                             <td>" . $row['plate'] . "</td>
                             <td>" . $row['brand'] . "</td>
@@ -247,7 +294,7 @@ if (!$result) {
                             <td>" . $row['fuel'] . "</td>
                             <td>" . $row['expense_detail'] . "</td>
                             <td>" . $row['current_total_expense'] . "</td>
-                            <td><img src='" . $image_path . "' alt='Car Image' style='width: 100px; height: auto;'></td> <!-- Display image -->
+                            
                             <td><a href='index.php?edit_id=" . $row['id'] . "' class='btn btn-edit'>Edit</a></td>
                             <td><a href='delete.php?id=" . $row['id'] . "' class='btn btn-delete' onclick=\"return confirm('Are you sure you want to delete this record?');\">Delete</a></td>
                         </tr>";
@@ -258,17 +305,78 @@ if (!$result) {
         <?php else: ?>
             <p class="no-details">No cars found</p>
         <?php endif; ?>
-
+        
         <!-- Back Button -->
         <a href="home.php" class="back-button">Back to Home</a>
     </div>
 
+    <div class="overlay" id="overlay" onclick="closePopup()"></div>
+
+    <div class="popup" id="popup">
+        <img id="popup-img" src="" alt="Car Image" onclick="toggleImageSize()">
+        <h2 id="popup-name"></h2>
+        <p><strong>Plate:</strong> <span id="popup-plate"></span></p>
+        <p><strong>Brand:</strong> <span id="popup-brand"></span></p>
+        <p><strong>Model:</strong> <span id="popup-model"></span></p>
+        <p><strong>Mile/KM:</strong> <span id="popup-km_mile"></span></p>
+        <p><strong>Accident Visual:</strong> <span id="popup-accident_visual"></span></p>
+        <p><strong>Accident Tramer:</strong> <span id="popup-accident_tramer"></span></p>
+        <p><strong>MSF:</strong> <span id="popup-msf"></span></p>
+        <p><strong>DSF:</strong> <span id="popup-dsf"></span></p>
+        <p><strong>Package:</strong> <span id="popup-package"></span></p>
+        <p><strong>Color:</strong> <span id="popup-color"></span></p>
+        <p><strong>Engine:</strong> <span id="popup-engine"></span></p>
+        <p><strong>Gear:</strong> <span id="popup-gear"></span></p>
+        <p><strong>Fuel:</strong> <span id="popup-fuel"></span></p>
+        <p><strong>Expense Detail:</strong> <span id="popup-expense_detail"></span></p>
+        <p><strong>Current Total Expense:</strong> <span id="popup-current_total_expense"></span></p>
+        <button onclick="closePopup()">Close</button>
+    </div>
+
     <footer>
-        <p>&copy; 2025 Serhan Kombos Otomotiv. All rights reserved.</p>
+        <p>&copy; 2025 Serhan Kombos Otomotiv</p>
     </footer>
+
+    <script>
+        function showDetails(name, plate, brand, model, km_mile, accident_visual, accident_tramer, msf, dsf, package, color, engine, gear, fuel, expense_detail, current_total_expense, imagePath) {
+            // Populate the popup with the car details
+            document.getElementById('popup-name').textContent = name;
+            document.getElementById('popup-plate').textContent = plate;
+            document.getElementById('popup-brand').textContent = brand;
+            document.getElementById('popup-model').textContent = model;
+            document.getElementById('popup-km_mile').textContent = km_mile;
+            document.getElementById('popup-accident_visual').textContent = accident_visual;
+            document.getElementById('popup-accident_tramer').textContent = accident_tramer;
+            document.getElementById('popup-msf').textContent = msf;
+            document.getElementById('popup-dsf').textContent = dsf;
+            document.getElementById('popup-package').textContent = package;
+            document.getElementById('popup-color').textContent = color;
+            document.getElementById('popup-engine').textContent = engine;
+            document.getElementById('popup-gear').textContent = gear;
+            document.getElementById('popup-fuel').textContent = fuel;
+            document.getElementById('popup-expense_detail').textContent = expense_detail;
+            document.getElementById('popup-current_total_expense').textContent = current_total_expense;
+            document.getElementById('popup-img').src = imagePath;
+            
+            // Show the overlay and popup
+            document.getElementById('overlay').style.display = 'block';
+            document.getElementById('popup').style.display = 'block';
+        }
+
+        function closePopup() {
+            // Hide the overlay and popup
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('popup').style.display = 'none';
+        }
+
+        function toggleImageSize() {
+            var img = document.getElementById('popup-img');
+            if (img.style.width === '50%') {
+                img.style.width = '250px'; // Larger size
+            } else {
+                img.style.width = '50%'; // Default size
+            }
+        }
+    </script>
 </body>
 </html>
-
-<?php
-$conn->close();
-?>
