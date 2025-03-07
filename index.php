@@ -399,8 +399,9 @@ foreach ($fields as $id => $label) {
 </div>
 
 <div class="action-links">
+       <a href="home.php">Back To Home</a>
         <a href="display.php">View Submitted Cars</a>
-        <a href="home.php">Back To Home</a>
+     
     </div>
 
 <script>
