@@ -502,7 +502,7 @@ if (!$result) {
                    let imageIndex = 0;
                     let images = [];
 
-                    function showDetails(name, plate,chasis, brand, model,year, km_mile, accident_visual, accident_tramer, msf, dsf, package, color, engine, gear, fuel, expense_detail, current_total_expense, image1, image2) {
+                    function showDetails(name, plate,chasis, brand,year, model, km_mile, accident_visual, accident_tramer, msf, dsf, package, color, engine, gear, fuel, expense_detail, current_total_expense, image1, image2) {
                         images = [image1, image2];
 
                         imageIndex = 0;

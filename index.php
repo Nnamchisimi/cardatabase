@@ -395,10 +395,39 @@ $conn->close();
     const carModels = {
     "Chrysler": ["300 C", "300 M", "Concorde", "Crossfire", "LHS", "Neon", "PT Cruiser", "Sebring", "Stratus"],
 
-    "Audi": ["A3", "A4", "A6", "Q5", "Q7", "TT"],
+    "Audi": [
+                "100", "80", "A1", "A2", "A3", "A3 Cabriolet", "A4", "A4 Allroad", 
+                "A4 Avant", "A4 Cabriolet", "A5", "A5 Avant", "A5 Cabriolet", 
+                "A6 Allroad", "A6 Avant", "A6 e-tron Avant", "A6 Saloon", "A6 Unspecified",
+                "A7", "A8", "Allroad", "Cabriolet", "Coupe", "e-tron", "e-tron GT", 
+                "e-tron S", "Q2", "Q3", "Q4 e-tron", "Q5", "Q6 e-tron", "Q7", "Q8", 
+                "Q8 e-tron", "quattro", "R8", "RS3", "RS4", "RS4 Avant", 
+                "RS4 Cabriolet", "RS5", "RS6", "RS6 Avant", "RS7", "RS e-tron GT", 
+                "RS Q3", "RSQ8", "S1", "S3", "S4", "S4 Avant", "S4 Cabriolet", 
+                "S5", "S5 Avant", "S6 Avant", "S6 e-tron Avant", "S6 Saloon", "S7", 
+                "S8", "S e-tron GT", "SQ2", "SQ5", "SQ6 e-tron", "SQ7", "SQ8", 
+                "SQ8 e-tron", "TT", "TT RS", "TTS"],
+
+
+    "Alfa Romeo":["156 Sportwagon","159","159 Sportwagon","164","166","2000","4C","Alfasud","Brera","Giulia","Giulietta","GT","GTV","Junior","MiTo","Spider","Stelvio","Tonale"],
 
     "BMW": ["1 Series", "2 Series", "2 Series Active Tourer", "2 Series Gran Coupe", "2 Series Gran Tourer", "3 Series", "3 Series Gran Turismo", "4 Series", "4 Series Gran Coupe", "5 Series", "5 Series Gran Turismo", "6 Series", "6 Series Gran Turismo", "7 Series", "8 Series", "8 Series Gran Coupe", "Alpina B10", "Alpina B3", "Alpina B4 Gran Coupe", "Alpina B5", "Alpina B6", "Alpina B8 Gran Coupe", "Alpina D3", "Alpina D4", "Alpina D4 Gran Coupe", "Alpina D5", "Alpina Roadster", "Alpina Unspecified Models", "Alpina XD3",
-        "i3", "i4", "i5", "i7", "i8", "Isetta", "iX", "iX1", "iX2", "iX3", "M2", "M3", "M4", "M5", "M6", "M6 Gran Coupe", "M8", "M8 Gran Coupe", "X1", "X2", "X3", "X4", "X5", "X6", "X7", "XM", "Z3", "Z4", "Z4 M", "Z8"],
+            "i3", "i4", "i5", "i7", "i8", "Isetta", "iX", "iX1", "iX2", "iX3", "M2", "M3", "M4", "M5", "M6", "M6 Gran Coupe", "M8", "M8 Gran Coupe", "X1", "X2", "X3", "X4", "X5", "X6", "X7", "XM", "Z3", "Z4", "Z4 M", "Z8"],
+
+        "Chevrolet": [
+                    "Astro", "Aveo", "Belair", "C10", "Camaro", "Captiva", "Corvette", 
+                    "Corvette Stingray", "Cruze", "Kalos", "Lacetti", "Matiz", "Orlando", 
+                    "Silverado", "Spark", "SSR", "Suburban", "Tacuma", "Trax"],
+        "Citroen": [
+                    "2 CV", "Ami", "AX", "Berlingo", "BX", "C1", "C2", "C3", "C3 Aircross", 
+                    "C3 Picasso", "C3 Pluriel", "C4", "C4 Cactus", "C4 Picasso", 
+                    "C4 SpaceTourer", "C4 X", "C5", "C5 Aircross", "C5 X", "C6", "C8", 
+                    "C-Crosser", "C-Zero", "Dispatch", "DS3", "DS3 Cabrio", "DS4", "DS5", 
+                    "e-Berlingo", "e-C3", "e-C3 Aircross", "e-C4", "e-C4 X", 
+                    "e-SpaceTourer", "Grand C4 Picasso", "Grand C4 SpaceTourer", "Holidays", 
+                    "Nemo Multispace", "Relay", "Saxo", "SpaceTourer", "Xantia", "Xsara", 
+                    "Xsara Picasso"],
+
 
     "Maybach": ["57", "62"],
 
@@ -430,7 +459,7 @@ $conn->close();
         "ID.3", "ID.4", "ID.5", "ID.7", "ID. Buzz", "Jetta", "Karmann", "Lupo", "Multivan", "Passat", "Phaeton", "Polo", "Scirocco",
         "Sharan", "Taigo", "T-Cross", "Tiguan", "Tiguan Allspace", "Touareg", "Touran", "Transporter", "Transporter Shuttle", "Transporter Sportline", "T-Roc", "up!", "XL1"],
 
-    "KIA": ["Carens", "Ceed", "Cerato", "EV3", "EV6", "EV9", "Magentis", "Niro", "Optima", "Picanto", "ProCeed", "Rio", "Sedona", "Sorento", "Soul", "Sportage", "Stinger", "Stonic", "Venga", "XCeed"],
+    "Kia": ["Carens", "Ceed", "Cerato", "EV3", "EV6", "EV9", "Magentis", "Niro", "Optima", "Picanto", "ProCeed", "Rio", "Sedona", "Sorento", "Soul", "Sportage", "Stinger", "Stonic", "Venga", "XCeed"],
 
     "Jaguar": ["E-PACE", "E-Type", "F-PACE", "F-Type", "I-PACE", "Mark I", "Mark II", "S-Type", "XE", "XF", "XFR-S", "XJ", "XJR", "XJR-S", "XJS", "XK", "XK120", "XK140", "XK150", "XK8", "XKR", "XKR-S", "X-Type"],
 
