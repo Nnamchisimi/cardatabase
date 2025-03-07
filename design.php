@@ -1,108 +1,8 @@
 <?php
+// Include the database connection
 include('db_connection.php');
+include("index.php");
 
-
-// Check if we are editing an existing car
-if (isset($_GET['edit_id'])) {
-    $edit_id = $_GET['edit_id'];
-    $sql = "SELECT * FROM cars WHERE id = '$edit_id'";
-    $result = $conn->query($sql);
-
-    if ($result->num_rows > 0) {
-        $row = $result->fetch_assoc();
-        $customer_name = $row['customer_name'];
-        $plate = $row['plate'];
-        $chasis = $row['chasis'];
-
-        $brand = $row['brand'];
-        $year = $row['year'];
-        $model = $row['model'];
-        $km_mile = $row['km_mile'];
-        $accident_visual = $row['accident_visual'];
-        $accident_tramer = $row['accident_tramer'];
-        $msf = $row['msf'];
-        $dsf = $row['dsf'];
-        $package = $row['package'];
-        $color = $row['color'];
-        $engine = $row['engine'];
-        $gear = $row['gear'];
-        $fuel = $row['fuel'];
-        $expense_detail = $row['expense_detail'];
-        $current_expense = $row['current_total_expense'];
-        $image = $row['image']; // Get the image filename if exists
-        $image2 = $row['image2']; // Get the image filename if exists
-    }
-} else {
-    // Default values for a new car entry
-    $customer_name = $plate =$chasis= $brand = $year = $model = $km_mile = $accident_visual = $accident_tramer = $msf = $dsf = $package = $color = $engine = $gear = $fuel = $expense_detail = $current_expense = $image = $image2='';
-}
-
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $customer_name = $_POST['customer_name'];
-    $plate = $_POST['plate'];
-    $chasis = $_POST['chasis'];
-    $brand = $_POST['brand'];
-    $year = $_POST['year'];
-    $model = $_POST['model'];
-    $km_mile = $_POST['km_mile'];
-    $accident_visual = $_POST['accident_visual'];
-    $accident_tramer = $_POST['accident_tramer'];
-    $msf = $_POST['msf'];
-    $dsf = $_POST['dsf'];
-    $package = $_POST['package'];
-    $color = $_POST['color'];
-    $engine = $_POST['engine'];
-    $gear = $_POST['gear'];
-    $fuel = $_POST['fuel'];
-    $expense_detail = $_POST['expense_detail'];
-    $current_expense = $_POST['current_expense'];
-
-    // Handle file upload
-    if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
-        $image = $_FILES['image']['name'];
-        $image_tmp = $_FILES['image']['tmp_name'];
-        $image_folder = 'uploads/' . $image;
-        move_uploaded_file($image_tmp, $image_folder);
-    } elseif (isset($_GET['edit_id'])) {
-        // Keep the existing image if it's being updated and no new image is uploaded
-        $image = $row['image'];
-    }
-
-
-     // Handle file upload for second file
-     if (isset($_FILES['image2']) && $_FILES['image2']['error'] == 0) {
-        $image2 = $_FILES['image2']['name'];
-        $image_tmp2 = $_FILES['image2']['tmp_name'];
-        $image_folder2 = 'uploads/' . $image2;
-        move_uploaded_file($image_tmp2, $image_folder2);
-    } elseif (isset($_GET['edit_id'])) {
-        // Keep the existing image if it's being updated and no new image is uploaded
-        $image2 = $row['image2'];
-    }
-
-    if (isset($_GET['edit_id'])) {
-        // Update the car details
-        $sql = "UPDATE cars SET customer_name = '$customer_name', plate = '$plate', chasis = '$chasis', brand = '$brand', year = '$year', model = '$model', km_mile = '$km_mile', accident_visual = '$accident_visual', accident_tramer = '$accident_tramer', msf = '$msf', dsf = '$dsf', package = '$package', color = '$color', engine = '$engine', gear = '$gear', fuel = '$fuel', expense_detail = '$expense_detail', current_total_expense = '$current_expense', image = '$image' , image2 = '$image2' WHERE id = '$edit_id'";
-        if ($conn->query($sql) === TRUE) {
-            // Clear form after successful submission
-            unset($customer_name, $plate,$chasis, $brand,$year, $model, $km_mile, $accident_visual, $accident_tramer, $msf, $dsf, $package, $color, $engine, $gear, $fuel, $expense_detail, $current_expense,$image, $image2);
-        } else {
-            echo "Error: " . $conn->error;
-        }
-    } else {
-        // Insert new car data
-        $sql = "INSERT INTO cars (customer_name, plate, chasis, brand, year, model, km_mile, accident_visual, accident_tramer, msf, dsf, package, color, engine, gear, fuel, expense_detail, current_total_expense,image2, image ) 
-        VALUES ('$customer_name', '$plate', '$chasis', '$brand','$year' ,'$model', '$km_mile', '$accident_visual', '$accident_tramer', '$msf', '$dsf', '$package', '$color', '$engine', '$gear', '$fuel', '$expense_detail', '$current_expense', '$image','$image2')";
-        if ($conn->query($sql) === TRUE) {
-            // Clear form after successful submission
-            unset($customer_name, $plate,$chasis, $brand,$year, $model, $km_mile, $accident_visual, $accident_tramer, $msf, $dsf, $package, $color, $engine, $gear, $fuel, $expense_detail, $current_expense);
-        } else {
-            echo "Error: " . $conn->error;
-        }
-    }
-}
-
-$conn->close();
 ?>
 
 <!DOCTYPE html>
@@ -310,11 +210,10 @@ foreach ($fields as $id => $label) {
             <select id="year" name="year"  required>
                 <option value="" disabled <?php echo empty($year) ? 'selected' : ''; ?>>Select</option>
                 <?php
-                    $yearOptions = ["2025", "2024", "2023", "2022", "2021", "2020", "2019", "2018", "2017", "2016", "2015", "2014", 
-                    "2013", "2012", "2011", "2010", "2009", "2008", "2007", "2006", "2005", "2004", "2003", "2002", 
-                    "2001", "2000", "1999", "1998", "1997", "1996", "1995", "1994", "1993", "1992", "1991", "1990", "1989"
-                    ];
-                    foreach ($yearOptions as $yearOption) {
+                $yearOptions = ["1989","1990","1991","1992","1993","1994","1995","1996","1997","1998","1999","2000",
+                                "2001","2002","2003","2004","2005", "2006","2007","2008","2009","2010","2011","2012",
+                            "2013","2014","2015","2016","2017","2018","2019","2020","2021","2022","2023","2024","2025"];
+                foreach ($yearOptions as $yearOption) {
                     $selected = ($year == $yearOption) ? 'selected' : '';
                     echo "<option value='$yearOption' $selected>$yearOption</option>";
                 }
@@ -535,3 +434,4 @@ foreach ($fields as $id => $label) {
 
 </body>
 </html>
+

@@ -227,7 +227,7 @@ if (!$result) {
         display: flex;
         justify-content: center;
         background-color: #333; /* Darker background for a more professional look */
-        padding: 20px 0;
+        padding: 20px 10;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         border-radius: 8px;
         margin-top: 2px;
@@ -238,7 +238,7 @@ if (!$result) {
     /* Styling the individual links in the nav */
     nav a {
         color: #f1f1f1;
-        padding: 14px 32px;
+        padding: 10px 10px;
         font-size: 1.2rem;
         font-weight: 600;
         text-decoration: none;
