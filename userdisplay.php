@@ -2,7 +2,6 @@
 include('db_connection.php');
 session_start();
 
-
 // Initialize variables
 $search_query = '';
 
@@ -454,8 +453,7 @@ if (!$result) {
                             <td>" . $row['current_total_expense'] . "</td>
                             
                             
-                            <td><a href='index.php?edit_id=" . $row['id'] . "' class='btn btn-edit'>Edit</a></td>
-                            <td><a href='delete.php?id=" . $row['id'] . "' class='btn btn-delete' onclick=\"return confirm('Are you sure you want to delete this record?');\">Delete</a></td>
+                          
                         </tr>";
                     }
                     ?>

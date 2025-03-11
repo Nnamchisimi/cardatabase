@@ -15,10 +15,12 @@ if (isset($_POST['login'])) {
     $user = $result->fetch_assoc();
 
     if ($user && password_verify($password, $user['password'])) {
-        // Start a session and redirect to another page after login
+        // Start a session and set session variables for user data
         $_SESSION['user_id'] = $user['user_id'];
         $_SESSION['username'] = $user['username'];
-        header('Location: home.php'); // Redirect to a logged-in page (e.g., dashboard)
+        $_SESSION['role'] = $user['role'];  // Add role to the session
+
+        header('Location: home.php'); // Redirect to home.php after successful login
     } else {
         $error_message = "Invalid username or password.";
     }

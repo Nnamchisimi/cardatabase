@@ -1,3 +1,19 @@
+<?php
+session_start();
+
+// Check if the user is logged in
+if (!isset($_SESSION['user_id'])) {
+    echo "You need to be logged in to view car details.";
+    exit;
+}
+
+// Retrieve the user's role
+$role = $_SESSION['role'] ?? 'user'; // Default to 'user' if role is not set
+
+// Determine where to redirect based on role
+$viewCarsLink = ($role === 'admin') ? 'display.php' : 'userdisplay.php';
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -20,7 +36,8 @@
             background-size: cover; /* Ensures the image covers the entire screen */
             background-position: center center; /* Centers the image */
             background-attachment: fixed; /* Keeps the image fixed when scrolling */
- 
+        }
+
         /* Container settings */
         .container {
             width: 100%;
@@ -37,7 +54,7 @@
             padding: 40px;
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            max-width: 500px; /* Ensure it doesn't stretch too wide */
+            max-width: 600px; /* Ensure it doesn't stretch too wide */
         }
 
         /* Header text */
@@ -84,6 +101,11 @@
             background-color: #2196F3; /* Blue for viewing car details */
         }
 
+        /* Sign out button styles */
+        .signout-btn {
+            background-color: #d9534f; /* Red for signing out */
+        }
+
         /* Hover effects */
         .btn-home:hover {
             transform: scale(1.05);
@@ -119,7 +141,8 @@
             
             <div class="button-container">
                 <a href="index.php" class="btn-home add-car-btn">➕ Add New Car</a>
-                <a href="display.php" class="btn-home view-cars-btn">🚗 View Car Details</a>
+                <a href="<?php echo $viewCarsLink; ?>" class="btn-home view-cars-btn">🚗 View Car Details</a>
+                <a href="login.php" class="btn-home signout-btn">🚪 Sign Out</a>
             </div>
         </div>
     </div>
