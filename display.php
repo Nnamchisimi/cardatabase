@@ -8,6 +8,8 @@ $search_query = '';
 if (isset($_GET['search'])) {
     $search_query = mysqli_real_escape_string($conn, $_GET['search']);  // sanitize input
     $sql = "SELECT * FROM cars WHERE customer_name LIKE '%$search_query%'";
+    $sql = "SELECT * FROM cars WHERE chasis LIKE '%$search_query%'";
+    $sql = "SELECT * FROM cars WHERE plate LIKE '%$search_query%'";
 } else {
     $sql = "SELECT * FROM cars";
 }
