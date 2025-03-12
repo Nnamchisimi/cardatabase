@@ -330,6 +330,11 @@ if (!$result) {
         .form-group {
             width: 100%;
         }
+        /* Styling for the icons */
+        .edit-icon, .delete-icon {
+            font-size: 22px; /* Larger icon size */
+            margin-right: 8px; /* Space between icon and text */
+        }
 
         .arrow {
             position: absolute;
@@ -412,6 +417,7 @@ if (!$result) {
                         <th>Accident Tramer</th>
                         <th>MSF</th>
                         <th>DSF</th>
+                        <th>GSF</th>
                         <th>Package</th>
                         <th>Color</th>
                         <th>Engine</th>
@@ -431,7 +437,7 @@ if (!$result) {
 
                         echo "<tr>
                             <td>
-                                      <img src='" . $image_path . "' style='width: 100px;' onclick='showDetails(\"" . $row['customer_name'] . "\", \"" . $row['plate'] . "\",  \"" . $row['chasis'] . "\",\"" . $row['brand'] . "\",\"" . $row['year'] . "\", \"" . $row['model'] . "\", \"" . $row['km_mile'] . "\", \"" . $row['accident_visual'] . "\", \"" . $row['accident_tramer'] . "\", \"" . $row['msf'] . "\", \"" . $row['dsf'] . "\", \"" . $row['package'] . "\", \"" . $row['color'] . "\", \"" . $row['engine'] . "\", \"" . $row['gear'] . "\", \"" . $row['fuel'] . "\", \"" . $row['expense_detail'] . "\", \"" . $row['current_total_expense'] . "\", \"" . $image_path . "\", \"" . $image_path2 . "\")'>
+                                      <img src='" . $image_path . "' style='width: 100px;' onclick='showDetails(\"" . $row['customer_name'] . "\", \"" . $row['plate'] . "\",  \"" . $row['chasis'] . "\",\"" . $row['brand'] . "\",\"" . $row['year'] . "\", \"" . $row['model'] . "\", \"" . $row['km_mile'] . "\", \"" . $row['accident_visual'] . "\", \"" . $row['accident_tramer'] . "\", \"" . $row['msf'] . "\", \"" . $row['dsf'] . "\", \"".$row['gsf'] . "\" , \"" . $row['package'] . "\", \"" . $row['color'] . "\", \"" . $row['engine'] . "\", \"" . $row['gear'] . "\", \"" . $row['fuel'] . "\", \"" . $row['expense_detail'] . "\", \"" . $row['current_total_expense'] . "\", \"" . $image_path . "\", \"" . $image_path2 . "\")'>
                             </td>
 
                             <td>" . $row['customer_name'] . "</td>
@@ -445,6 +451,7 @@ if (!$result) {
                             <td>" . $row['accident_tramer'] . "</td>
                             <td>" . $row['msf'] . "</td>
                             <td>" . $row['dsf'] . "</td>
+                            <td>" . $row['gsf'] . "</td>
                             <td>" . $row['package'] . "</td>
                             <td>" . $row['color'] . "</td>
                             <td>" . $row['engine'] . "</td>
@@ -454,8 +461,18 @@ if (!$result) {
                             <td>" . $row['current_total_expense'] . "</td>
                             
                             
-                            <td><a href='index.php?edit_id=" . $row['id'] . "' class='btn btn-edit'>Edit</a></td>
-                            <td><a href='delete.php?id=" . $row['id'] . "' class='btn btn-delete' onclick=\"return confirm('Are you sure you want to delete this record?');\">Delete</a></td>
+                            <td>
+                                <a href='index.php?edit_id=" . $row['id'] . "' class='btn btn-edit'>
+                                    Edit
+                                </a>
+                            </td>
+                           
+
+                            <td>
+                                <a href='delete.php?id=" . $row['id'] . "' class='btn btn-delete' onclick=\"return confirm('Are you sure you want to delete this record?');\">
+                                     Delete
+                                </a>
+                            </td>
                         </tr>";
                     }
                     ?>
@@ -487,6 +504,7 @@ if (!$result) {
             <p><strong>Accident Tramer:</strong> <span id="popup-accident_tramer"></span></p>
             <p><strong>MSF:</strong> <span id="popup-msf"></span></p>
             <p><strong>DSF:</strong> <span id="popup-dsf"></span></p>
+            <p><strong>GSF:</strong> <span id="popup-gsf"></span></p>
             <p><strong>Package:</strong> <span id="popup-package"></span></p>
             <p><strong>Color:</strong> <span id="popup-color"></span></p>
             <p><strong>Engine:</strong> <span id="popup-engine"></span></p>
@@ -506,7 +524,7 @@ if (!$result) {
                    let imageIndex = 0;
                     let images = [];
 
-                    function showDetails(name, plate,chasis, brand,year, model, km_mile, accident_visual, accident_tramer, msf, dsf, package, color, engine, gear, fuel, expense_detail, current_total_expense, image1, image2) {
+                    function showDetails(name, plate,chasis, brand,year, model, km_mile, accident_visual, accident_tramer, msf, dsf,gsf, package, color, engine, gear, fuel, expense_detail, current_total_expense, image1, image2) {
                         images = [image1, image2];
 
                         imageIndex = 0;
@@ -522,6 +540,7 @@ if (!$result) {
                         document.getElementById('popup-accident_tramer').textContent = accident_tramer;
                         document.getElementById('popup-msf').textContent = msf;
                         document.getElementById('popup-dsf').textContent = dsf;
+                        document.getElementById('popup-gsf').textContent = gsf;
                         document.getElementById('popup-package').textContent = package;
                         document.getElementById('popup-color').textContent = color;
                         document.getElementById('popup-engine').textContent = engine;

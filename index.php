@@ -23,6 +23,7 @@ if (isset($_GET['edit_id'])) {
         $accident_tramer = $row['accident_tramer'];
         $msf = $row['msf'];
         $dsf = $row['dsf'];
+        $gsf=$row['gsf'];
         $package = $row['package'];
         $color = $row['color'];
         $engine = $row['engine'];
@@ -32,10 +33,12 @@ if (isset($_GET['edit_id'])) {
         $current_expense = $row['current_total_expense'];
         $image = $row['image']; // Get the image filename if exists
         $image2 = $row['image2']; // Get the image filename if exists
+        $image3 = $row['image3']; // Get the image filename if exists
+        $image4 = $row['image4']; // Get the image filename if exists
     }
 } else {
     // Default values for a new car entry
-    $customer_name = $plate =$chasis= $brand = $year = $model = $km_mile = $accident_visual = $accident_tramer = $msf = $dsf = $package = $color = $engine = $gear = $fuel = $expense_detail = $current_expense = $image = $image2='';
+    $customer_name = $plate =$chasis= $brand = $year = $model = $km_mile = $accident_visual = $accident_tramer = $msf = $dsf= $gsf = $package = $color = $engine = $gear = $fuel = $expense_detail = $current_expense = $image = $image2= $image3=$image4='';
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -50,6 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $accident_tramer = $_POST['accident_tramer'];
     $msf = $_POST['msf'];
     $dsf = $_POST['dsf'];
+    $gsf = $_POST['gsf'];
     $package = $_POST['package'];
     $color = $_POST['color'];
     $engine = $_POST['engine'];
@@ -89,23 +93,44 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         // Keep the existing image if it's being updated and no new image is uploaded
         $image2 = $row['image2'];
     }
+     // Handle file upload for second file
+     if (isset($_FILES['image3']) && $_FILES['image3']['error'] == 0) {
+        $image3 = $_FILES['image3']['name'];
+        $image_tmp3 = $_FILES['image3']['tmp_name'];
+        $image_folder3 = 'uploads/' . $image3;
+        move_uploaded_file($image_tmp3, $image_folder3);
+    } elseif (isset($_GET['edit_id'])) {
+        // Keep the existing image if it's being updated and no new image is uploaded
+        $image3 = $row['image3'];
+    }
+
+     // Handle file upload for second file
+     if (isset($_FILES['image4']) && $_FILES['image4']['error'] == 0) {
+        $image4 = $_FILES['image4']['name'];
+        $image_tmp4 = $_FILES['image4']['tmp_name'];
+        $image_folder4 = 'uploads/' . $image4;
+        move_uploaded_file($image_tmp4, $image_folder4);
+    } elseif (isset($_GET['edit_id'])) {
+        // Keep the existing image if it's being updated and no new image is uploaded
+        $image4 = $row['image4'];
+    }
 
     if (isset($_GET['edit_id'])) {
         // Update the car details
-        $sql = "UPDATE cars SET customer_name = '$customer_name', plate = '$plate', chasis = '$chasis', brand = '$brand', year = '$year', model = '$model', km_mile = '$km_mile', accident_visual = '$accident_visual', accident_tramer = '$accident_tramer', msf = '$msf', dsf = '$dsf', package = '$package', color = '$color', engine = '$engine', gear = '$gear', fuel = '$fuel', expense_detail = '$expense_detail', current_total_expense = '$current_expense', image = '$image' , image2 = '$image2' WHERE id = '$edit_id'";
+        $sql = "UPDATE cars SET customer_name = '$customer_name', plate = '$plate', chasis = '$chasis', brand = '$brand', year = '$year', model = '$model', km_mile = '$km_mile', accident_visual = '$accident_visual', accident_tramer = '$accident_tramer', msf = '$msf', dsf = '$dsf', gsf='$gsf', package = '$package', color = '$color', engine = '$engine', gear = '$gear', fuel = '$fuel', expense_detail = '$expense_detail', current_total_expense = '$current_expense', image = '$image' , image2 = '$image2', image3 = '$image3', image4 = '$image4' WHERE id = '$edit_id'";
         if ($conn->query($sql) === TRUE) {
             // Clear form after successful submission
-            unset($customer_name, $plate,$chasis, $brand,$year, $model, $km_mile, $accident_visual, $accident_tramer, $msf, $dsf, $package, $color, $engine, $gear, $fuel, $expense_detail, $current_expense,$image, $image2);
+            unset($customer_name, $plate,$chasis, $brand,$year, $model, $km_mile, $accident_visual, $accident_tramer, $msf, $dsf, $gsf, $package, $color, $engine, $gear, $fuel, $expense_detail, $current_expense,$image, $image2,$image3,$image4);
         } else {
             echo "Error: " . $conn->error;
         }
     } else {
         // Insert new car data
-        $sql = "INSERT INTO cars (customer_name, plate, chasis, brand, year, model, km_mile, accident_visual, accident_tramer, msf, dsf, package, color, engine, gear, fuel, expense_detail, current_total_expense,image2, image ) 
-        VALUES ('$customer_name', '$plate', '$chasis', '$brand','$year' ,'$model', '$km_mile', '$accident_visual', '$accident_tramer', '$msf', '$dsf', '$package', '$color', '$engine', '$gear', '$fuel', '$expense_detail', '$current_expense', '$image','$image2')";
+        $sql = "INSERT INTO cars (customer_name, plate, chasis, brand, year, model, km_mile, accident_visual, accident_tramer, msf, dsf, gsf, package, color, engine, gear, fuel, expense_detail, current_total_expense,image2,image3,image4 image ) 
+        VALUES ('$customer_name', '$plate', '$chasis', '$brand','$year' ,'$model', '$km_mile', '$accident_visual', '$accident_tramer', '$msf', '$dsf','$gsf', '$package', '$color', '$engine', '$gear', '$fuel', '$expense_detail', '$current_expense', '$image','$image2','$image3','$image4')";
         if ($conn->query($sql) === TRUE) {
             // Clear form after successful submission
-            unset($customer_name, $plate,$chasis, $brand,$year, $model, $km_mile, $accident_visual, $accident_tramer, $msf, $dsf, $package, $color, $engine, $gear, $fuel, $expense_detail, $current_expense);
+            unset($customer_name, $plate,$chasis, $brand,$year, $model, $km_mile, $accident_visual, $accident_tramer, $msf, $dsf, $gsf, $package, $color, $engine, $gear, $fuel, $expense_detail, $current_expense);
         } else {
             echo "Error: " . $conn->error;
         }
@@ -172,6 +197,7 @@ foreach ($fields as $id => $label) {
                 // Initialize the variables $msf and $dsf with some default value
                 $msf = isset($msf) ? $msf : ''; // Default empty string if $msf is not set
                 $dsf = isset($dsf) ? $dsf : ''; // Default empty string if $dsf is not set
+                $gsf = isset($gsf) ? $gsf : ''; // Default empty string if $gsf is not set
 
                 // Extract numeric price and currency separately for msf
                 $msf_parts = explode(" ", $msf);
@@ -183,6 +209,11 @@ foreach ($fields as $id => $label) {
                 $dsf_value = isset($dsf_parts[0]) ? $dsf_parts[0] : "";
                 $dsf_currency = isset($dsf_parts[1]) ? $dsf_parts[1] : "";
 
+                // Extract numeric price and currency separately for gsf
+                $gsf_parts = explode(" ",$gsf);
+                $gsf_value = isset($gsf_parts[0]) ? $gsf_parts[0] : "";
+                $gsf_currency = isset($gsf_parts[1]) ? $gsf_parts[1] : "";
+
             
             ?>
 
@@ -191,7 +222,7 @@ foreach ($fields as $id => $label) {
                 <label for="msf">Müşteri Satiş Fiyati (MSF):</label>
                 <div style="display: flex; gap: 10px; align-items: center;">
                     <input type="number" id="msf_value" step="0.01" placeholder="Enter price" value="<?php echo htmlspecialchars($msf_value); ?>" required />
-                    <select id="currency_selector1" onchange="updateMSF()">
+                    <select id="currency_selector1" onchange="updateMSF()" required>
                         <option value="" disabled <?php echo empty($msf_currency) ? 'selected' : ''; ?>>Select</option>
                         <option value="EUR" <?php echo ($msf_currency == 'EUR') ? 'selected' : ''; ?>>€ EUR</option>
                         <option value="TL" <?php echo ($msf_currency == 'TL') ? 'selected' : ''; ?>>₺ TL</option>
@@ -202,10 +233,10 @@ foreach ($fields as $id => $label) {
 
         <!-- Dunusunlar Satis Fiyat (DSF) -->
         <div class="form-group">
-            <label for="dsf">Dunusunlar Satis Fiyat (DSF):</label>
+            <label for="dsf">Düsünülen Satis Fiyati (DSF):</label>
             <div style="display: flex; gap: 10px; align-items: center;">
                 <input type="number" id="dsf_value" step="0.01" placeholder="Enter price" value="<?php echo htmlspecialchars($dsf_value); ?>" required />
-                <select id="currency_selector2" onchange="updateDSF()">
+                <select id="currency_selector2" onchange="updateDSF()" required>
                     <option value="" disabled <?php echo empty($dsf_currency) ? 'selected' : ''; ?>>Select</option>
                     <option value="EUR" <?php echo ($dsf_currency == 'EUR') ? 'selected' : ''; ?>>€ EUR</option>
                     <option value="TL" <?php echo ($dsf_currency == 'TL') ? 'selected' : ''; ?>>₺ TL</option>
@@ -213,8 +244,19 @@ foreach ($fields as $id => $label) {
                 <input type="hidden" id="dsf" name="dsf" value="<?php echo htmlspecialchars($dsf); ?>" />
             </div>
         </div>
-        
-      
+        <!-- Gerçekleşen Satis Fiyati (GSF) -->
+        <div  class ="form-group">
+            <label for ="gsf"> Gerçekleşen Satiş Fiyati (GSF):</label>
+            <div style = "display: flex; gap: 10px; align-items: center;">
+                <input type= "number"  id="gsf_value" step="0.01" placeholder= "Enter price" value="<?php echo htmlspecialchars($gsf_value); ?>" required />
+                <select id= "currency_selector4" onchange= "updateGSF()" required>
+                    <option value="" disabled <?php echo empty ($gsf_currency) ? 'selected' : ''; ?>>Select</option>
+                    <option value="EUR" <?php echo($gsf_currency == 'EUR') ? 'selected' : ''; ?>>€ EUR</option>
+                    <option value="TL" <?php echo ($gsf_currency == 'TL') ? 'selected': ''; ?>>₺ TL</option>
+                </select>
+                <input type="hidden" id="gsf" name="gsf" value="<?php echo htmlspecialchars($gsf); ?>" />
+                </div>
+            </div>
         
         <div class="form-group">
     <label for="km_mile">Mil/KM | Mile/KM:</label>
@@ -223,7 +265,7 @@ foreach ($fields as $id => $label) {
                 <input type="number" id="km_mile_value" name="km_mile_value" step="0.01" placeholder="Enter value" value="<?php echo htmlspecialchars($km_mile); ?>" required />
 
                 <!-- Select for unit (KM or MILE) -->
-                <select id="currency_selector3" name="currency_selector3" onchange="update_km_mile()">
+                <select id="currency_selector3" name="currency_selector3" onchange="update_km_mile()" required>
                     <option value="" disabled <?php echo empty($km_mile) ? 'selected' : ''; ?>>Select</option>
                     <option value="KM" <?php echo ($km_mile && strpos($km_mile, 'KM') !== false) ? 'selected' : ''; ?>>KM</option>
                     <option value="MILE" <?php echo ($km_mile && strpos($km_mile, 'MILE') !== false) ? 'selected' : ''; ?>>MILE</option>
@@ -319,6 +361,21 @@ foreach ($fields as $id => $label) {
     <?php
     if (!empty($image2) && $_SERVER['REQUEST_METHOD'] == 'GET' && isset($_GET['edit_id'])) {
         echo "<p>Current Image2: <img src='uploads/$image2' alt='Car Image2' width='100' /></p>";
+    }
+    ?>
+
+<label for="image3">Car Image3:</label>
+    <input type="file" id="image3" name="image3" <?php echo isset($_GET['edit_id']) ? '' : 'required'; ?> />
+    <?php
+    if (!empty($image3) && $_SERVER['REQUEST_METHOD'] == 'GET' && isset($_GET['edit_id'])) {
+        echo "<p>Current Image3: <img src='uploads/$image3' alt='Car Image3' width='100' /></p>";
+    }
+    ?>
+    <label for="image4">Car Image4:</label>
+    <input type="file" id="image3" name="image3" <?php echo isset($_GET['edit_id']) ? '' : 'required'; ?> />
+    <?php
+    if (!empty($image3) && $_SERVER['REQUEST_METHOD'] == 'GET' && isset($_GET['edit_id'])) {
+        echo "<p>Current Image3: <img src='uploads/$image3' alt='Car Image3' width='100' /></p>";
     }
     ?>
 </div>
@@ -428,53 +485,76 @@ foreach ($fields as $id => $label) {
             "Nissan": ["350 Z", "370 Z", "Almera", "Altima", "Bluebird", "Cedric", "Cube", "Datsun", "Skyline", "Sunny", "Tiida", "X-Trail"]
 };
 
-function updateMSF() {
-    var msfValue = document.getElementById("msf_value")?.value || "";
-    var currency = document.getElementById("currency_selector1")?.value || "";
-    document.getElementById("msf").value = msfValue ? msfValue + " " + currency : "";
-}
+        function updateMSF() {
+            var msfValue = document.getElementById("msf_value")?.value || "";
+            var currency = document.getElementById("currency_selector1")?.value || "";
+            document.getElementById("msf").value = msfValue ? msfValue + " " + currency : "";
+        }
 
-function updateDSF() {
-    var dsfValue = document.getElementById("dsf_value")?.value || "";
-    var currency = document.getElementById("currency_selector2")?.value || "";
-    document.getElementById("dsf").value = dsfValue ? dsfValue + " " + currency : "";
-}
+        function updateDSF() {
+            var dsfValue = document.getElementById("dsf_value")?.value || "";
+            var currency = document.getElementById("currency_selector2")?.value || "";
+            document.getElementById("dsf").value = dsfValue ? dsfValue + " " + currency : "";
+        }
+        function updateGSF(){
+            var gsfValue = document.getElementById("gsf_value")?.value || "";
+            var currency = document.getElementById("currency_selector4")?.value || "";
+            document.getElementById("gsf").value = gsfValue ? gsfValue + " " + currency : "";
+        }
 
-// Add event listeners only if elements exist
-document.addEventListener("DOMContentLoaded", function () {
-    var msfInput = document.getElementById("msf_value");
-    var msfCurrency = document.getElementById("currency_selector1");
-    var dsfInput = document.getElementById("dsf_value");
-    var dsfCurrency = document.getElementById("currency_selector2");
+                // Function to validate currency selection
+        function validateCurrencySelection() {
+            var msfCurrency = document.getElementById("currency_selector1").value;
+            var dsfCurrency = document.getElementById("currency_selector2").value;
+            var gsfCurrency = document.getElementById("currency_selector4").value;
 
-    if (msfInput) msfInput.addEventListener("input", updateMSF);
-    if (msfCurrency) msfCurrency.addEventListener("change", updateMSF);
-    if (dsfInput) dsfInput.addEventListener("input", updateDSF);
-    if (dsfCurrency) dsfCurrency.addEventListener("change", updateDSF);
-});
+            // Check if any currency is not selected
+            if (!msfCurrency || !dsfCurrency || !gsfCurrency) {
+                alert("Please select a currency for all fields (MSF, DSF, and GSF).");
+                return false;  // Prevent form submission
+            }
+            return true;  // Allow form submission
+        }
 
-function update_km_mile() {
-    var km_mile_Value = document.getElementById("km_mile_value").value;
-    var currency = document.getElementById("currency_selector3").value;
-    document.getElementById("km_mile").value = km_mile_Value ? km_mile_Value + " " + currency : "";
-}
+        // Add event listeners only if elements exist
+        document.addEventListener("DOMContentLoaded", function () {
+            var msfInput = document.getElementById("msf_value");
+            var msfCurrency = document.getElementById("currency_selector1");
+            var dsfInput = document.getElementById("dsf_value");
+            var dsfCurrency = document.getElementById("currency_selector2");
+            var gsfInput = document.getElementById("gsf_value");
+            var gsfCurrency = document.getElementById("currency_selector4");
 
-document.getElementById("km_mile_value").addEventListener("input", update_km_mile);
-document.getElementById("currency_selector3").addEventListener("change", update_km_mile);
+            if (msfInput) msfInput.addEventListener("input", updateMSF);
+            if (msfCurrency) msfCurrency.addEventListener("change", updateMSF);
+            if (dsfInput) dsfInput.addEventListener("input", updateDSF);
+            if (dsfCurrency) dsfCurrency.addEventListener("change", updateDSF);
+            if (gsfInput) gsfInput.addEventListener( "input", updateGSF);
+            if (gsfCurrency) gsfCurrency.addEventListener("change", updateGSF);
+        });
+
+        function update_km_mile() {
+            var km_mile_Value = document.getElementById("km_mile_value").value;
+            var currency = document.getElementById("currency_selector3").value;
+            document.getElementById("km_mile").value = km_mile_Value ? km_mile_Value + " " + currency : "";
+        }
+
+        document.getElementById("km_mile_value").addEventListener("input", update_km_mile);
+        document.getElementById("currency_selector3").addEventListener("change", update_km_mile);
 
 
 
 
 
-    function updateModels() {
-    const brandDropdown = document.getElementById("brand");
-    const modelDropdown = document.getElementById("model");
+            function updateModels() {
+            const brandDropdown = document.getElementById("brand");
+            const modelDropdown = document.getElementById("model");
 
-    // Always add the "Select" option at the top
-    modelDropdown.innerHTML = '<option value="" disabled selected>Select</option>';
+            // Always add the "Select" option at the top
+            modelDropdown.innerHTML = '<option value="" disabled selected>Select</option>';
 
-    const selectedBrand = brandDropdown.value; // Get selected brand
-    const selectedModel = "<?php echo $model; ?>"; // Get model from PHP
+            const selectedBrand = brandDropdown.value; // Get selected brand
+            const selectedModel = "<?php echo $model; ?>"; // Get model from PHP
 
     if (selectedBrand && carModels[selectedBrand]) {
         // Loop through and add models based on selected brand
