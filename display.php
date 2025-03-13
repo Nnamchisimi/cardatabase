@@ -434,10 +434,24 @@ if (!$result) {
                         // Check if an image is uploaded for the car
                         $image_path = $row['image'] ? 'uploads/' . $row['image'] : 'uploads/default.jpg'; // Default image if none is uploaded
                         $image_path2 = $row['image2'] ? 'uploads/' . $row['image2'] : 'uploads/default.jpg'; // Default image2 if none is uploaded
+                        $image_path3 = $row['image3'] ? 'uploads/' . $row['image3'] : 'uploads/default.jpg'; // Default image if none is uploaded
+                        $image_path4 = $row['image4'] ? 'uploads/' . $row['image4'] : 'uploads/default.jpg'; // Default image2 if none is uploaded
 
                         echo "<tr>
                             <td>
-                                      <img src='" . $image_path . "' style='width: 100px;' onclick='showDetails(\"" . $row['customer_name'] . "\", \"" . $row['plate'] . "\",  \"" . $row['chasis'] . "\",\"" . $row['brand'] . "\",\"" . $row['year'] . "\", \"" . $row['model'] . "\", \"" . $row['km_mile'] . "\", \"" . $row['accident_visual'] . "\", \"" . $row['accident_tramer'] . "\", \"" . $row['msf'] . "\", \"" . $row['dsf'] . "\", \"".$row['gsf'] . "\" , \"" . $row['package'] . "\", \"" . $row['color'] . "\", \"" . $row['engine'] . "\", \"" . $row['gear'] . "\", \"" . $row['fuel'] . "\", \"" . $row['expense_detail'] . "\", \"" . $row['current_total_expense'] . "\", \"" . $image_path . "\", \"" . $image_path2 . "\")'>
+                                <img src='" . $image_path . "' style='width: 100px;' onclick='showDetails(\"" . 
+                                $row['customer_name'] . "\", \"" . $row['plate'] . "\", \"" . $row['chasis'] . "\", \"" . 
+                                $row['brand'] . "\", \"" . $row['year'] . "\", \"" . $row['model'] . "\", \"" . 
+                                $row['km_mile'] . "\", \"" . $row['accident_visual'] . "\", \"" . 
+                                $row['accident_tramer'] . "\", \"" . $row['msf'] . "\", \"" . 
+                                $row['dsf'] . "\", \"" . $row['gsf'] . "\", \"" . 
+                                $row['package'] . "\", \"" . $row['color'] . "\", \"" . 
+                                $row['engine'] . "\", \"" . $row['gear'] . "\", \"" . 
+                                $row['fuel'] . "\", \"" . $row['expense_detail'] . "\", \"" . 
+                                $row['current_total_expense'] . "\", \"" . 
+                                $image_path . "\", \"" . $image_path2 . "\", \"" . 
+                                $image_path3 . "\", \"" . $image_path4 . "\")'>
+
                             </td>
 
                             <td>" . $row['customer_name'] . "</td>
@@ -524,8 +538,8 @@ if (!$result) {
                    let imageIndex = 0;
                     let images = [];
 
-                    function showDetails(name, plate,chasis, brand,year, model, km_mile, accident_visual, accident_tramer, msf, dsf,gsf, package, color, engine, gear, fuel, expense_detail, current_total_expense, image1, image2) {
-                        images = [image1, image2];
+                    function showDetails(name, plate,chasis, brand,year, model, km_mile, accident_visual, accident_tramer, msf, dsf,gsf, package, color, engine, gear, fuel, expense_detail, current_total_expense, image1, image2,image3,image4) {
+                        images = [image1, image2,image3,image4];
 
                         imageIndex = 0;
 
