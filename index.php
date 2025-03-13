@@ -297,18 +297,23 @@ foreach ($fields as $id => $label) {
         </div>
 
         <div class="form-group">
-            <label for="accident_visual">Kaza Görsel | Accident Visual:</label>
-            <select id="accident_visual" name="accident_visual" required>
-                <option value="" disabled <?php echo empty($accident_visual) ? 'selected' : ''; ?>>Select</option>
-                <?php
-                $accident_visualOptions = ["CRITICAL DAMAGE", "MINOR DAMAGE", "NO VISUAL DAMAGE"];
-                foreach ($accident_visualOptions as $accident_visualOption) {
-                    $selected = ($accident_visual == $accident_visualOption) ? 'selected' : '';
-                    echo "<option value='$accident_visualOption' $selected>$accident_visualOption</option>";
-                }
-                ?>
-            </select>
-        </div>
+    <label for="accident_visual">Kaza Görsel | Accident Visual:</label>
+    <select id="accident_visual" name="accident_visual" required onchange="toggleOtherField()">
+        <option value="" disabled <?php echo empty($accident_visual) ? 'selected' : ''; ?>>Select</option>
+        <?php
+        $accident_visualOptions = ["CRITICAL DAMAGE", "MINOR DAMAGE", "NO VISUAL DAMAGE"];
+        foreach ($accident_visualOptions as $accident_visualOption) {
+            $selected = ($accident_visual == $accident_visualOption) ? 'selected' : '';
+            echo "<option value='$accident_visualOption' $selected>$accident_visualOption</option>";
+        }
+        ?>
+        <option value="other" <?php echo ($accident_visual == 'other') ? 'selected' : ''; ?>>Other</option>
+    </select>
+
+    <!-- Input field for 'Other' option -->
+    <input type="text" id="other_accident_visual" name="other_accident_visual" placeholder="Please specify" style="display: none; margin-top: 10px;" value="<?php echo ($accident_visual == 'other') ? htmlspecialchars($other_accident_visual) : ''; ?>" />
+
+</div>
 
         <div class="form-group">
             <label for="fuel">Yakit | Fuel:</label>
@@ -515,6 +520,22 @@ foreach ($fields as $id => $label) {
             }
             return true;  // Allow form submission
         }
+                // Function to toggle the 'Other' input field based on select option
+            function toggleOtherField() {
+                var selectElement = document.getElementById('accident_visual');
+                var otherInput = document.getElementById('other_accident_visual');
+                
+                if (selectElement.value === 'other') {
+                    otherInput.style.display = 'block'; // Show the input field
+                } else {
+                    otherInput.style.display = 'none'; // Hide the input field
+                }
+            }
+
+// Call the function on page load to check if 'Other' was selected previously
+window.onload = function() {
+    toggleOtherField();
+}
 
         // Add event listeners only if elements exist
         document.addEventListener("DOMContentLoaded", function () {

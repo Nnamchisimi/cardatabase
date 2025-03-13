@@ -6,6 +6,7 @@ if (!isset($_SESSION['user_id'])) {
     echo "You need to be logged in to view car details.";
     exit;
 }
+$username = $_SESSION['username'] ?? 'User';  // Default to 'User' if username is not set
 
 // Retrieve the user's role
 $role = $_SESSION['role'] ?? 'user'; // Default to 'user' if role is not set
@@ -59,8 +60,14 @@ $viewCarsLink = ($role === 'admin') ? 'display.php' : 'userdisplay.php';
 
         /* Header text */
         h1 {
-            font-size: 2.5rem;
+            font-size: 1.5rem;
             margin-bottom: 20px;
+            color: #333;
+        }
+          /* Header text */
+          h2 {
+            font-size: 2rem;
+            margin-bottom: 10px;
             color: #333;
         }
 
@@ -136,6 +143,7 @@ $viewCarsLink = ($role === 'admin') ? 'display.php' : 'userdisplay.php';
 <body>
     <div class="container">
         <div class="home-container">
+             <h2>Hello <?php echo htmlspecialchars($username); ?>!</h2>
             <h1>Welcome to the Car Management System</h1>
             <p>Manage your car details with ease. Select an option below:</p>
             

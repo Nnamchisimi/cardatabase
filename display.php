@@ -9,20 +9,28 @@ $search_query = '';
 // Check if the search query is set in the URL
 if (isset($_GET['search'])) {
     $search_query = mysqli_real_escape_string($conn, $_GET['search']);  // sanitize input
-    $sql = "SELECT * FROM cars WHERE customer_name LIKE '%$search_query%'";
-    $sql = "SELECT * FROM cars WHERE chasis LIKE '%$search_query%'";
-    $sql = "SELECT * FROM cars WHERE plate LIKE '%$search_query%'";
+    // Remove spaces and hyphens from the search query
+    $search_query_cleaned = str_replace([' ', '-'], '', $search_query);
+    
+    // Search across plate, chasis, and customer_name columns
+    $sql = "SELECT * FROM cars WHERE 
+            (REPLACE(REPLACE(LOWER(plate), ' ', ''), '-', '') LIKE '%$search_query_cleaned%')  OR
+            chasis LIKE '%$search_query%' OR
+            customer_name LIKE '%$search_query%'";
 } else {
     $sql = "SELECT * FROM cars";
 }
 
 $result = $conn->query($sql);
 
+
 // Check if the query executed successfully
 if (!$result) {
     die("Error in query execution: " . $conn->error);
 }
 ?>
+
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -383,8 +391,8 @@ if (!$result) {
         <!-- Search Form -->
         <form method="GET" action="display.php" class="search-form">
             <div class="form-group">
-                <label for="search">Search by Customer Name: </label>
-                <input type="text" name="search" id="search" class="input-field" value="<?php echo htmlspecialchars($search_query); ?>" placeholder="Search by customer name">
+                <label for="search">Search: </label>
+                <input type="text" name="search" id="search" class="input-field" value="<?php echo htmlspecialchars($search_query); ?>" placeholder="Enter a plate, chasis, or customer name">
                 <input type="submit" value="Search" class="btn btn-primary">
             </div>
         </form>
@@ -477,6 +485,7 @@ if (!$result) {
                             </td>
                         </tr>";
                     }
+                    
                     ?>
                 </tbody>
             </table>
@@ -581,5 +590,6 @@ if (!$result) {
             }
         }
     </script>
+    
 </body>
 </html>
