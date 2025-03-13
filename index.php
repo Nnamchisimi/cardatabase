@@ -126,7 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     } else {
         // Insert new car data
-        $sql = "INSERT INTO cars (customer_name, plate, chasis, brand, year, model, km_mile, accident_visual, accident_tramer, msf, dsf, gsf, package, color, engine, gear, fuel, expense_detail, current_total_expense,image2,image3,image4,image ) 
+        $sql = "INSERT INTO cars (customer_name, plate, chasis, brand, year, model, km_mile, accident_visual, accident_tramer, msf, dsf, gsf, package, color, engine, gear, fuel, expense_detail, current_total_expense,image,image2,image3,image4 ) 
         VALUES ('$customer_name', '$plate', '$chasis', '$brand','$year' ,'$model', '$km_mile', '$accident_visual', '$accident_tramer', '$msf', '$dsf','$gsf', '$package', '$color', '$engine', '$gear', '$fuel', '$expense_detail', '$current_expense', '$image','$image2','$image3','$image4')";
         if ($conn->query($sql) === TRUE) {
             // Clear form after successful submission
@@ -372,10 +372,10 @@ foreach ($fields as $id => $label) {
     }
     ?>
     <label for="image4">Car Image4:</label>
-    <input type="file" id="image3" name="image3" <?php echo isset($_GET['edit_id']) ? '' : 'required'; ?> />
+    <input type="file" id="image4" name="image4" <?php echo isset($_GET['edit_id']) ? '' : 'required'; ?> />
     <?php
-    if (!empty($image3) && $_SERVER['REQUEST_METHOD'] == 'GET' && isset($_GET['edit_id'])) {
-        echo "<p>Current Image3: <img src='uploads/$image3' alt='Car Image3' width='100' /></p>";
+    if (!empty($image4) && $_SERVER['REQUEST_METHOD'] == 'GET' && isset($_GET['edit_id'])) {
+        echo "<p>Current Image4: <img src='uploads/$image4' alt='Car Image4' width='100' /></p>";
     }
     ?>
 </div>
