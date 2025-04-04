@@ -1,8 +1,27 @@
 <?php
+
+
+session_start(); // Start the session to access session variables
 include('db_connection.php');
 
+// Check if the user is logged in
+if (!isset($_SESSION['user_id'])) {
+    // If the user is not logged in, display the message and a button to go back to login
+    echo '
+    <div style="text-align: center; margin-top: 50px; background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 20px; border-radius: 8px;">
+        <h2>You need to be logged in to view car details.</h2>
+        <p>Please log in first.</p>
+        <a href="login.php" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Go to Login</a>
+    </div>';
+    exit;  // Stop the script from executing further
+}
 
 
+
+// Check if the user is logged in
+if (!isset($_SESSION['username'])) {
+    die("You need to be logged in to edit data.");
+}
 // Check if we are editing an existing car
 if (isset($_GET['edit_id'])) {
     $edit_id = $_GET['edit_id'];
@@ -14,7 +33,6 @@ if (isset($_GET['edit_id'])) {
         $customer_name = $row['customer_name'];
         $plate = $row['plate'];
         $chasis = $row['chasis'];
-
         $brand = $row['brand'];
         $year = $row['year'];
         $model = $row['model'];
@@ -23,7 +41,7 @@ if (isset($_GET['edit_id'])) {
         $accident_tramer = $row['accident_tramer'];
         $msf = $row['msf'];
         $dsf = $row['dsf'];
-        $gsf=$row['gsf'];
+        $gsf = $row['gsf'];
         $package = $row['package'];
         $color = $row['color'];
         $engine = $row['engine'];
@@ -38,8 +56,10 @@ if (isset($_GET['edit_id'])) {
     }
 } else {
     // Default values for a new car entry
-    $customer_name = $plate =$chasis= $brand = $year = $model = $km_mile = $accident_visual = $accident_tramer = $msf = $dsf= $gsf = $package = $color = $engine = $gear = $fuel = $expense_detail = $current_expense = $image = $image2= $image3=$image4='';
+    $customer_name = $plate = $chasis = $brand = $year = $model = $km_mile = $accident_visual = $accident_tramer = $msf = $dsf = $gsf = $package = $color = $engine = $gear = $fuel = $expense_detail = $current_expense = $image = $image2 = $image3 = $image4 = '';
 }
+
+
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $customer_name = $_POST['customer_name'];
@@ -70,67 +90,133 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         } else {
             $km_mile = NULL; // If the km_mile is empty, set it to NULL or 0 based on your preference
         }
-
-    // Handle file upload
-    if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
-        $image = $_FILES['image']['name'];
-        $image_tmp = $_FILES['image']['tmp_name'];
-        $image_folder = 'uploads/' . $image;
-        move_uploaded_file($image_tmp, $image_folder);
-    } elseif (isset($_GET['edit_id'])) {
-        // Keep the existing image if it's being updated and no new image is uploaded
-        $image = $row['image'];
-    }
-
-
-     // Handle file upload for second file
-     if (isset($_FILES['image2']) && $_FILES['image2']['error'] == 0) {
-        $image2 = $_FILES['image2']['name'];
-        $image_tmp2 = $_FILES['image2']['tmp_name'];
-        $image_folder2 = 'uploads/' . $image2;
-        move_uploaded_file($image_tmp2, $image_folder2);
-    } elseif (isset($_GET['edit_id'])) {
-        // Keep the existing image if it's being updated and no new image is uploaded
-        $image2 = $row['image2'];
-    }
-     // Handle file upload for second file
-     if (isset($_FILES['image3']) && $_FILES['image3']['error'] == 0) {
-        $image3 = $_FILES['image3']['name'];
-        $image_tmp3 = $_FILES['image3']['tmp_name'];
-        $image_folder3 = 'uploads/' . $image3;
-        move_uploaded_file($image_tmp3, $image_folder3);
-    } elseif (isset($_GET['edit_id'])) {
-        // Keep the existing image if it's being updated and no new image is uploaded
-        $image3 = $row['image3'];
-    }
-
-     // Handle file upload for second file
-     if (isset($_FILES['image4']) && $_FILES['image4']['error'] == 0) {
-        $image4 = $_FILES['image4']['name'];
-        $image_tmp4 = $_FILES['image4']['tmp_name'];
-        $image_folder4 = 'uploads/' . $image4;
-        move_uploaded_file($image_tmp4, $image_folder4);
-    } elseif (isset($_GET['edit_id'])) {
-        // Keep the existing image if it's being updated and no new image is uploaded
-        $image4 = $row['image4'];
-    }
+        function compressAndResizeImage($source, $destination, $quality = 70, $thumb = false) {
+            $info = getimagesize($source);
+            if ($info === false) return false;
+        
+            $mime = $info['mime'];
+            switch ($mime) {
+                case 'image/jpeg':
+                    $image = imagecreatefromjpeg($source);
+                    break;
+                case 'image/png':
+                    $image = imagecreatefrompng($source);
+                    break;
+                case 'image/gif':
+                    $image = imagecreatefromgif($source);
+                    break;
+                default:
+                    return false; // Unsupported format
+            }
+        
+            // Resize for thumbnail if requested
+            if ($thumb) {
+                $thumbWidth = 150;
+                $thumbHeight = 150;
+                $srcWidth = imagesx($image);
+                $srcHeight = imagesy($image);
+                $tmp = imagecreatetruecolor($thumbWidth, $thumbHeight);
+                imagecopyresampled($tmp, $image, 0, 0, 0, 0, $thumbWidth, $thumbHeight, $srcWidth, $srcHeight);
+                $image = $tmp;
+            }
+        
+            // Save the image
+            switch ($mime) {
+                case 'image/jpeg':
+                    imagejpeg($image, $destination, $quality);
+                    break;
+                case 'image/png':
+                    imagepng($image, $destination, 9 - round($quality / 10)); // Quality for PNG is 0-9
+                    break;
+                case 'image/gif':
+                    imagegif($image, $destination);
+                    break;
+            }
+        
+            // Free memory
+            imagedestroy($image);
+            return true;
+        }
+        
+        // Function to process existing images and generate thumbnails if they don't exist
+        function processExistingImages($image) {
+            $uploadPath = 'uploads/' . $image;
+            $thumbPath = 'uploads/thumb_' . $image;
+        
+            // Check if the thumbnail exists, if not, generate it
+            if (file_exists($uploadPath) && !file_exists($thumbPath)) {
+                compressAndResizeImage($uploadPath, $thumbPath, 60, true); // Create a thumbnail if it doesn't exist
+            }
+        }
+        
+        // Handle image uploads
+        $image = handleImageUpload('image');
+        $image2 = handleImageUpload('image2');
+        $image3 = handleImageUpload('image3');
+        $image4 = handleImageUpload('image4');
+        
+        // Handle existing images on edit if no new image is uploaded
+        if (!$image && isset($_GET['edit_id'])) {
+            $image = $row['image'];
+        }
+        if (!$image2 && isset($_GET['edit_id'])) {
+            $image2 = $row['image2'];
+        }
+        if (!$image3 && isset($_GET['edit_id'])) {
+            $image3 = $row['image3'];
+        }
+        if (!$image4 && isset($_GET['edit_id'])) {
+            $image4 = $row['image4'];
+        }
+        
+        // Process existing images to generate thumbnails if needed
+        if ($image) {
+            processExistingImages($image); // Check and generate thumbnail for image
+        }
+        if ($image2) {
+            processExistingImages($image2); // Check and generate thumbnail for image2
+        }
+        if ($image3) {
+            processExistingImages($image3); // Check and generate thumbnail for image3
+        }
+        if ($image4) {
+            processExistingImages($image4); // Check and generate thumbnail for image4
+        }
 
     if (isset($_GET['edit_id'])) {
         // Update the car details
-        $sql = "UPDATE cars SET customer_name = '$customer_name', plate = '$plate', chasis = '$chasis', brand = '$brand', year = '$year', model = '$model', km_mile = '$km_mile', accident_visual = '$accident_visual', accident_tramer = '$accident_tramer', msf = '$msf', dsf = '$dsf', gsf='$gsf', package = '$package', color = '$color', engine = '$engine', gear = '$gear', fuel = '$fuel', expense_detail = '$expense_detail', current_total_expense = '$current_expense', image = '$image' , image2 = '$image2', image3 = '$image3', image4 = '$image4' WHERE id = '$edit_id'";
+        $sql = "UPDATE cars SET customer_name = '$customer_name', plate = '$plate', chasis = '$chasis', brand = '$brand', year = '$year', model = '$model', km_mile = '$km_mile', accident_visual = '$accident_visual', accident_tramer = '$accident_tramer', msf = '$msf', dsf = '$dsf', gsf='$gsf', package = '$package', color = '$color', engine = '$engine', gear = '$gear', fuel = '$fuel', expense_detail = '$expense_detail', current_total_expense = '$current_expense', image = '$image' , image2 = '$image2', image3 = '$image3', image4 = '$image4',updated_by = '{$_SESSION['username']}' WHERE id = '$edit_id'";
         if ($conn->query($sql) === TRUE) {
             // Clear form after successful submission
             unset($customer_name, $plate,$chasis, $brand,$year, $model, $km_mile, $accident_visual, $accident_tramer, $msf, $dsf, $gsf, $package, $color, $engine, $gear, $fuel, $expense_detail, $current_expense,$image, $image2,$image3,$image4);
+       
+                  // ✅ **ADD REDIRECT BASED ON USER ROLE HERE**
+        if ($_SESSION['role'] === 'admin') {
+            header("Location: display.php");
+        } else {
+            header("Location: userdisplay.php");
+        }
+        exit(); // Stop further execution
+       
+       
         } else {
             echo "Error: " . $conn->error;
         }
     } else {
         // Insert new car data
-        $sql = "INSERT INTO cars (customer_name, plate, chasis, brand, year, model, km_mile, accident_visual, accident_tramer, msf, dsf, gsf, package, color, engine, gear, fuel, expense_detail, current_total_expense,image,image2,image3,image4 ) 
-        VALUES ('$customer_name', '$plate', '$chasis', '$brand','$year' ,'$model', '$km_mile', '$accident_visual', '$accident_tramer', '$msf', '$dsf','$gsf', '$package', '$color', '$engine', '$gear', '$fuel', '$expense_detail', '$current_expense', '$image','$image2','$image3','$image4')";
+        $sql = "INSERT INTO cars (customer_name, plate, chasis, brand, year, model, km_mile, accident_visual, accident_tramer, msf, dsf, gsf, package, color, engine, gear, fuel, expense_detail, current_total_expense,image,image2,image3,image4, created_by ) 
+        VALUES ('$customer_name', '$plate', '$chasis', '$brand','$year' ,'$model', '$km_mile', '$accident_visual', '$accident_tramer', '$msf', '$dsf','$gsf', '$package', '$color', '$engine', '$gear', '$fuel', '$expense_detail', '$current_expense', '$image','$image2','$image3','$image4','{$_SESSION['username']}')";
         if ($conn->query($sql) === TRUE) {
             // Clear form after successful submission
             unset($customer_name, $plate,$chasis, $brand,$year, $model, $km_mile, $accident_visual, $accident_tramer, $msf, $dsf, $gsf, $package, $color, $engine, $gear, $fuel, $expense_detail, $current_expense);
+              // ✅ **ADD REDIRECT BASED ON USER ROLE HERE**
+              if ($_SESSION['role'] === 'admin') {
+                header("Location: display.php");
+            } else {
+                header("Location: userdisplay.php");
+            }
+            exit(); // Stop further execution
+        
         } else {
             echo "Error: " . $conn->error;
         }
@@ -151,37 +237,226 @@ $conn->close();
 <div class="container">
 
     <form action="index.php<?php echo isset($_GET['edit_id']) ? '?edit_id=' . $_GET['edit_id'] : ''; ?>" method="post" enctype="multipart/form-data">
-        <?php 
-        $fields = [
-            'customer_name' => 'Müşteri Adi | Customer Name', 'plate' => 'Plaka | Plate', 'chasis'=>'Şasi Numarasi | Chasis Number', 'accident_tramer' => 'Kaza Tramer | Accident Tramer', 
-             'package' => 'Paket | Package', 'color' => 'Renk | Color', 
-            'engine' => 'Motor | Engine', 'expense_detail' => 'Masraf Detayi | Expense Detail', 'current_expense' => 'Aktuel Masraf  Toplami|Current Total Expense'
-        ];
         
+        <!-- Müşteri Adi | Customer Name -->
+        <div class="form-group">
+            <label for="customer_name">Müşteri Adi | Customer Name:</label>
+            <input type="text" id="customer_name" name="customer_name" value="<?php echo isset($customer_name) ? htmlspecialchars($customer_name) : ''; ?>" required />
+        </div>
 
-foreach ($fields as $id => $label) {
-    if ($id == 'chasis') {
-        echo "
-        <div class='form-group'>
-            <label for='$id'>$label:</label>
-            <input type='text' id='$id' name='$id' value='" . ($$id ?? '') . "' minlength='17' maxlength='17' required placeholder='Enter 17-digit Chasis Number'/>
-        </div>
-        ";
+       <!-- Plaka | Plate -->
+<div class="form-group">
+    <label for="plate">Plaka | Plate:</label>
+    <input 
+        type="text" 
+        id="plate" 
+        name="plate" 
+        value="<?php echo isset($plate) ? htmlspecialchars($plate) : ''; ?>" 
+        required 
+        placeholder="VV 700" 
+    />
+    <small id="plateError" style="color: red; display: none;">Please enter the plate in the format "XX 000" (two letters and three digits).</small>
+</div>
+
+<?php
+    $chasis = isset($chasis) ? $chasis : ''; // Default empty string if $chasis is not set
+
+    // Extract numeric price and currency separately for msf
+    $chasis_parts = explode(" ", $chasis);
+    $chasis_currency = isset($chasis_parts[0]) ? $chasis_parts[0] : ""; // Corrected to get currency
+    $chasis_value = isset($chasis_parts[1]) ? $chasis_parts[1] : ""; // Corrected to get the chasis value
+?>
+<!-- Chassis Field (Initially Hidden) -->
+<div class="form-group" id="chasis_container" style="display: none;">
+    <label for="chasis">Şasi Numarasi | Chasis Number:</label>
+    <div style="display: flex; gap: 10px; align-items: center;">
+        <?php
+            // Extract chassis prefix (first 3 characters) and chassis number (rest)
+            $chasis_value = htmlspecialchars($chasis ?? '');
+            $chasis_prefix = substr($chasis_value, 0, 3); // First 3 characters (Prefix)
+            $chasis_number = substr($chasis_value, 3); // Remaining part (Number)
+        ?>
+
+        <!-- Chassis Prefix Dropdown -->
+        <select id="currency_selector5" name="currency_selector5" onchange="updateChasisField()" >
+            <option value="" disabled <?php echo empty($chasis_prefix) ? 'selected' : ''; ?>>Select</option>
+            <option value="WDB" <?php echo ($chasis_prefix == 'WDB') ? 'selected' : ''; ?>>WDB</option>
+            <option value="WDC" <?php echo ($chasis_prefix == 'WDC') ? 'selected' : ''; ?>>WDC</option>
+            <option value="WDD" <?php echo ($chasis_prefix == 'WDD') ? 'selected' : ''; ?>>WDD</option>
+            <option value="WDF" <?php echo ($chasis_prefix == 'WDF') ? 'selected' : ''; ?>>WDF</option>
+            <option value="W1K" <?php echo ($chasis_prefix == 'W1K') ? 'selected' : ''; ?>>W1K</option>
+            <option value="W1N" <?php echo ($chasis_prefix == 'W1N') ? 'selected' : ''; ?>>W1N</option>
+            <option value="W1T" <?php echo ($chasis_prefix == 'W1T') ? 'selected' : ''; ?>>W1T</option>
+            <option value="W1V" <?php echo ($chasis_prefix == 'W1V') ? 'selected' : ''; ?>>W1V</option>
+            <option value="W1W" <?php echo ($chasis_prefix == 'W1W') ? 'selected' : ''; ?>>W1W</option>
+            <option value="W1X" <?php echo ($chasis_prefix == 'W1X') ? 'selected' : ''; ?>>W1X</option>
+            <option value="W1Y" <?php echo ($chasis_prefix == 'W1Y') ? 'selected' : ''; ?>>W1Y</option>
+            <option value="W1J" <?php echo ($chasis_prefix == 'W1J') ? 'selected' : ''; ?>>W1J</option>
+            <option value="4JG" <?php echo ($chasis_prefix == '4JG') ? 'selected' : ''; ?>>4JG</option>
+            <option value="55S" <?php echo ($chasis_prefix == '55S') ? 'selected' : ''; ?>>55S</option>
+            <option value="1MB" <?php echo ($chasis_prefix == '1MB') ? 'selected' : ''; ?>>1MB</option>
+            <option value="2B1" <?php echo ($chasis_prefix == '2B1') ? 'selected' : ''; ?>>2B1</option>
+        </select>
+
+        <!-- Chassis Code Input -->
+        <input type="text" id="chasis_currency" name="chasis_currency" placeholder="Enter Chasis Code" 
+            value="<?php echo htmlspecialchars($chasis_number); ?>" oninput="updateChasisField()"  />
+
+        <!-- Hidden Input Field that Stores Combined Value -->
+        <input type="hidden" id="chasis" name="chasis" value= "<?php echo htmlspecialchars($chasis_value); ?>" />
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const brandDropdown = document.getElementById("brand");
+        const modelDropdown = document.getElementById("model");
+        const chasisContainer = document.getElementById("chasis_container");
+        const chassisSelector = document.getElementById("currency_selector5");
+        const chassisInput = document.getElementById("chasis_currency");
+        const chassisHidden = document.getElementById("chasis");
+
+        function toggleChasisField() {
+            if (!brandDropdown || !chasisContainer) {
+                console.error("Brand dropdown or chassis container not found!");
+                return;
+            }
+
+            var selectedBrand = brandDropdown.value.trim();
+            if (selectedBrand === "Mercedes-Benz") {
+                chasisContainer.style.display = "flex";
+            } else {
+                chasisContainer.style.display = "none";
+                chassisHidden.value = ""; // Clear chassis value when brand is not Mercedes-Benz
+            }
+        }
+
+        function updateChasisField() {
+    const prefix = chassisSelector.value.trim();
+    const number = chassisInput.value.trim();
+
+    // Check if both prefix and number are available
+    if (prefix && number) {
+        chassisHidden.value = prefix + " " + number;  // Adding space between prefix and number
     } else {
-        echo "
-        <div class='form-group'>
-            <label for='$id'>$label:</label>
-            <input type='text' id='$id' name='$id' value='" . ($$id ?? '') . "' required />
-        </div>
-        ";
+        chassisHidden.value = "";  // Clear if either is empty
     }
 }
 
-        ?>
+
+        // Ensure chassis is updated when user changes input
+        if (chassisSelector && chassisInput) {
+            chassisSelector.addEventListener("change", updateChasisField);
+            chassisInput.addEventListener("input", updateChasisField);
+        }
+
+        // Ensure the chassis field is visible if it's already filled (editing)
+        if (chassisHidden.value !== "") {
+            chasisContainer.style.display = "flex";
+        }
+
+        // Ensure visibility on brand change
+        if (brandDropdown) {
+            brandDropdown.addEventListener("change", toggleChasisField);
+            toggleChasisField();
+        }
+    });
+</script>
+
+
+
+
+        
 
         <div class="form-group">
+            <label for="brand">Marka | Brand:</label>
+            <select id="brand" name="brand" onchange="updateModels()"required>
+                <option value="" disabled <?php echo empty($brand) ? 'selected' : ''; ?>>Select</option>
+                <?php
+                   $brands = ["Acura", "Alfa Romeo", "Audi", "BMW", "Chevrolet", "Chrysler", "Citroen", "Dodge", "Fiat", "Ford", "Honda", "Hyundai", "Infiniti", "Jaguar", "Kia", "Lexus","Maybach", "Mazda", "Mercedes-Benz", "Nissan", "Peugeot", "Renault", "Subaru", "Toyota", "Volkswagen"];
+                foreach ($brands as $brandOption) {
+                    $selected = ($brand == $brandOption) ? 'selected' : '';
+                    echo "<option value='$brandOption' $selected>$brandOption</option>";
+                }
+                ?>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="model">Modeli | Model:</label>
+            <select id="model" name="model"  required>
+                <option value="" disabled <?php echo empty($model) ? 'selected' : ''; ?>>Select</option>
+            </select>
+        </div>
+
+        <!-- Motor | Engine -->
+        <div class="form-group">
+            <label for="engine">Motor | Engine:</label>
+            <input type="text" id="engine" name="engine" value="<?php echo isset($engine) ? htmlspecialchars($engine) : ''; ?>" required />
+        </div>
+
+        <!-- Paket | Package -->
+        <div class="form-group">
+            <label for="package">Paket | Package:</label>
+            <input type="text" id="package" name="package" value="<?php echo isset($package) ? htmlspecialchars($package) : ''; ?>" required />
+        </div>
+
+        <!-- Renk | Color -->
+        <div class="form-group">
+            <label for="color">Renk | Color:</label>
+            <input type="text" id="color" name="color" value="<?php echo isset($color) ? htmlspecialchars($color) : ''; ?>" required />
+        </div>
+
+        <!-- Üretim Yili | Year of Manufacture -->
+        <div class="form-group">
+            <label for="year">Üretim Yili | Year of Manufacture:</label>
+            <select id="year" name="year" required>
+                <option value="" disabled <?php echo empty($year) ? 'selected' : ''; ?>>Select</option>
+                <?php
+                    $yearOptions = ["2025", "2024", "2023", "2022", "2021", "2020", "2019", "2018", "2017", "2016", "2015", "2014", 
+                    "2013", "2012", "2011", "2010", "2009", "2008", "2007", "2006", "2005", "2004", "2003", "2002", 
+                    "2001", "2000", "1999", "1998", "1997", "1996", "1995", "1994", "1993", "1992", "1991", "1990", "1989"];
+                    foreach ($yearOptions as $yearOption) {
+                    $selected = ($year == $yearOption) ? 'selected' : '';
+                    echo "<option value='$yearOption' $selected>$yearOption</option>";
+                }
+                ?>
+            </select>
+        </div>
+
+        <!-- Mil/KM | Mile/KM -->
+        <div class="form-group">
+            <label for="km_mile">Mil/KM | Mile/KM:</label>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <input type="number" id="km_mile_value" name="km_mile_value" step="0.01" placeholder="Enter value" value="<?php echo isset($km_mile) ? htmlspecialchars($km_mile) : ''; ?>" required />
+                <select id="currency_selector3" name="currency_selector3" onchange="update_km_mile()" required>
+                    <option value="" disabled <?php echo empty($km_mile) ? 'selected' : ''; ?>>Select</option>
+                    <option value="KM" <?php echo ($km_mile && strpos($km_mile, 'KM') !== false) ? 'selected' : ''; ?>>KM</option>
+                    <option value="MILE" <?php echo ($km_mile && strpos($km_mile, 'MILE') !== false) ? 'selected' : ''; ?>>MILE</option>
+                </select>
+                <input type="hidden" id="km_mile" name="km_mile" value="<?php echo isset($km_mile) ? htmlspecialchars($km_mile) : ''; ?>" />
+            </div>
+        </div>
+
+        <!-- Yakit | Fuel -->
+        <div class="form-group">
+            <label for="fuel">Yakit | Fuel:</label>
+            <select id="fuel" name="fuel" required>
+                <option value="" disabled <?php echo empty($fuel) ? 'selected' : ''; ?>>Select</option>
+                <?php
+                $fuelOptions = ["PETROL/BENZENE", "DIESEL/DIZEL"];
+                foreach ($fuelOptions as $fuelOption) {
+                    $selected = ($fuel == $fuelOption) ? 'selected' : '';
+                    echo "<option value='$fuelOption' $selected>$fuelOption</option>";
+                }
+                ?>
+            </select>
+        </div>
+
+        <!-- Vites | Gear -->
+        <div class="form-group">
             <label for="gear">Vites | Gear:</label>
-            <select id="gear" name="gear"  required>
+            <select id="gear" name="gear" required>
                 <option value="" disabled <?php echo empty($gear) ? 'selected' : ''; ?>>Select</option>
                 <?php
                 $gearOptions = ["MANUAL/DUZ", "AUTOMATIC/OTOMATİK"];
@@ -191,13 +466,49 @@ foreach ($fields as $id => $label) {
                 }
                 ?>
             </select>
-
         </div>
-         <?php
+
+        <!-- Kaza Görsel | Accident Visual -->
+        <div class="form-group">
+            <label for="accident_visual">Kaza Görsel | Accident Visual:</label>
+            <select id="accident_visual" name="accident_visual" required onchange="toggleOtherField()">
+                <option value="" disabled <?php echo empty($accident_visual) ? 'selected' : ''; ?>>Select</option>
+                <?php
+                $accident_visualOptions = ["CRITICAL DAMAGE", "MINOR DAMAGE", "NO VISUAL DAMAGE"];
+                foreach ($accident_visualOptions as $accident_visualOption) {
+                    $selected = ($accident_visual == $accident_visualOption) ? 'selected' : '';
+                    echo "<option value='$accident_visualOption' $selected>$accident_visualOption</option>";
+                }
+                ?>
+                <option value="other" <?php echo ($accident_visual == 'other') ? 'selected' : ''; ?>>Other</option>
+            </select>
+            <input type="text" id="other_accident_visual" name="other_accident_visual" placeholder="Please specify" style="display: none; margin-top: 10px;" value="<?php echo ($accident_visual == 'other') ? htmlspecialchars($other_accident_visual) : ''; ?>" />
+        </div>
+
+        <!-- Kaza Tramer | Accident Tramer -->
+        <div class="form-group">
+            <label for="accident_tramer">Kaza Tramer | Accident Tramer:</label>
+            <input type="text" id="accident_tramer" name="accident_tramer" value="<?php echo isset($accident_tramer) ? htmlspecialchars($accident_tramer) : ''; ?>" required />
+        </div>
+
+        <!-- Masraf Detayi | Expense Detail -->
+        <div class="form-group">
+            <label for="expense_detail">Masraf Detayi | Expense Detail:</label>
+            <input type="text" id="expense_detail" name="expense_detail" value="<?php echo isset($expense_detail) ? htmlspecialchars($expense_detail) : ''; ?>" required />
+        </div>
+
+        <!-- Aktuel Masraf Toplami | Current Total Expense -->
+        <div class="form-group">
+            <label for="current_expense">Aktuel Masraf Toplami | Current Total Expense:</label>
+            <input type="number" id="current_expense" name="current_expense" value="<?php echo isset($current_expense) ? htmlspecialchars($current_expense) : ''; ?>" required />
+        </div>
+        <?php
                 // Initialize the variables $msf and $dsf with some default value
                 $msf = isset($msf) ? $msf : ''; // Default empty string if $msf is not set
                 $dsf = isset($dsf) ? $dsf : ''; // Default empty string if $dsf is not set
                 $gsf = isset($gsf) ? $gsf : ''; // Default empty string if $gsf is not set
+               
+              
 
                 // Extract numeric price and currency separately for msf
                 $msf_parts = explode(" ", $msf);
@@ -216,14 +527,17 @@ foreach ($fields as $id => $label) {
 
             
             ?>
+            
+      
 
-            <!-- Müşteri Satiş Fiyati (MSF) -->
-            <div class="form-group">
+           <!-- Müşteri Satiş Fiyati (MSF) -->
+           <div class="form-group">
                 <label for="msf">Müşteri Satiş Fiyati (MSF):</label>
                 <div style="display: flex; gap: 10px; align-items: center;">
                     <input type="number" id="msf_value" step="0.01" placeholder="Enter price" value="<?php echo htmlspecialchars($msf_value); ?>" required />
                     <select id="currency_selector1" onchange="updateMSF()" required>
                         <option value="" disabled <?php echo empty($msf_currency) ? 'selected' : ''; ?>>Select</option>
+                        <option value="STG" <?php echo ($msf_currency == 'STG') ? 'selected' : ''; ?>>£ STG</option>
                         <option value="EUR" <?php echo ($msf_currency == 'EUR') ? 'selected' : ''; ?>>€ EUR</option>
                         <option value="TL" <?php echo ($msf_currency == 'TL') ? 'selected' : ''; ?>>₺ TL</option>
                     </select>
@@ -231,166 +545,76 @@ foreach ($fields as $id => $label) {
                 </div>
             </div>
 
-        <!-- Dunusunlar Satis Fiyat (DSF) -->
+        <!-- Düsünülen Satis Fiyati (DSF) -->
         <div class="form-group">
             <label for="dsf">Düsünülen Satis Fiyati (DSF):</label>
             <div style="display: flex; gap: 10px; align-items: center;">
                 <input type="number" id="dsf_value" step="0.01" placeholder="Enter price" value="<?php echo htmlspecialchars($dsf_value); ?>" required />
                 <select id="currency_selector2" onchange="updateDSF()" required>
                     <option value="" disabled <?php echo empty($dsf_currency) ? 'selected' : ''; ?>>Select</option>
+                    <option value="STG" <?php echo ($msf_currency == 'STG') ? 'selected' : ''; ?>>£ STG</option>
                     <option value="EUR" <?php echo ($dsf_currency == 'EUR') ? 'selected' : ''; ?>>€ EUR</option>
                     <option value="TL" <?php echo ($dsf_currency == 'TL') ? 'selected' : ''; ?>>₺ TL</option>
                 </select>
                 <input type="hidden" id="dsf" name="dsf" value="<?php echo htmlspecialchars($dsf); ?>" />
             </div>
         </div>
-        <!-- Gerçekleşen Satis Fiyati (GSF) -->
-        <div  class ="form-group">
-            <label for ="gsf"> Gerçekleşen Satiş Fiyati (GSF):</label>
-            <div style = "display: flex; gap: 10px; align-items: center;">
-                <input type= "number"  id="gsf_value" step="0.01" placeholder= "Enter price" value="<?php echo htmlspecialchars($gsf_value); ?>" required />
-                <select id= "currency_selector4" onchange= "updateGSF()" required>
-                    <option value="" disabled <?php echo empty ($gsf_currency) ? 'selected' : ''; ?>>Select</option>
+
+        <!-- Gerçekleşen Satiş Fiyati (GSF) -->
+        <div class="form-group">
+            <label for="gsf">Gerçekleşen Satiş Fiyati (GSF):</label>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <input type="number" id="gsf_value" step="0.01" placeholder="Enter price(Optional)" value="<?php echo htmlspecialchars($gsf_value); ?>" />
+                <select id="currency_selector4" onchange="updateGSF()" >
+                    <option value="" disabled <?php echo empty($gsf_currency) ? 'selected' : ''; ?>>Select(optional)</option>
+                    <option value="STG" <?php echo ($msf_currency == 'STG') ? 'selected' : ''; ?>>£ STG</option>
                     <option value="EUR" <?php echo($gsf_currency == 'EUR') ? 'selected' : ''; ?>>€ EUR</option>
-                    <option value="TL" <?php echo ($gsf_currency == 'TL') ? 'selected': ''; ?>>₺ TL</option>
+                    <option value="TL" <?php echo ($gsf_currency == 'TL') ? 'selected' : ''; ?>>₺ TL</option>
                 </select>
                 <input type="hidden" id="gsf" name="gsf" value="<?php echo htmlspecialchars($gsf); ?>" />
-                </div>
-            </div>
-        
-        <div class="form-group">
-    <label for="km_mile">Mil/KM | Mile/KM:</label>
-    <div style="display: flex; gap: 10px; align-items: center;">
-                <!-- Input for km/mile value -->
-                <input type="number" id="km_mile_value" name="km_mile_value" step="0.01" placeholder="Enter value" value="<?php echo htmlspecialchars($km_mile); ?>" required />
-
-                <!-- Select for unit (KM or MILE) -->
-                <select id="currency_selector3" name="currency_selector3" onchange="update_km_mile()" required>
-                    <option value="" disabled <?php echo empty($km_mile) ? 'selected' : ''; ?>>Select</option>
-                    <option value="KM" <?php echo ($km_mile && strpos($km_mile, 'KM') !== false) ? 'selected' : ''; ?>>KM</option>
-                    <option value="MILE" <?php echo ($km_mile && strpos($km_mile, 'MILE') !== false) ? 'selected' : ''; ?>>MILE</option>
-                </select>
-
-                <!-- Hidden input for km_mile value to be submitted -->
-                <input type="hidden" id="km_mile" name="km_mile" value="<?php echo htmlspecialchars($km_mile); ?>" />
             </div>
         </div>
-        
 
-
-
-        <div class="form-group">
-            <label for="year">Üretim Yili | Year of Manufacture:</label>
-            <select id="year" name="year"  required>
-                <option value="" disabled <?php echo empty($year) ? 'selected' : ''; ?>>Select</option>
-                <?php
-                    $yearOptions = ["2025", "2024", "2023", "2022", "2021", "2020", "2019", "2018", "2017", "2016", "2015", "2014", 
-                    "2013", "2012", "2011", "2010", "2009", "2008", "2007", "2006", "2005", "2004", "2003", "2002", 
-                    "2001", "2000", "1999", "1998", "1997", "1996", "1995", "1994", "1993", "1992", "1991", "1990", "1989"
-                    ];
-                    foreach ($yearOptions as $yearOption) {
-                    $selected = ($year == $yearOption) ? 'selected' : '';
-                    echo "<option value='$yearOption' $selected>$yearOption</option>";
-                }
-                ?>
-            </select>
-        </div>
-
-        <div class="form-group">
-    <label for="accident_visual">Kaza Görsel | Accident Visual:</label>
-    <select id="accident_visual" name="accident_visual" required onchange="toggleOtherField()">
-        <option value="" disabled <?php echo empty($accident_visual) ? 'selected' : ''; ?>>Select</option>
-        <?php
-        $accident_visualOptions = ["CRITICAL DAMAGE", "MINOR DAMAGE", "NO VISUAL DAMAGE"];
-        foreach ($accident_visualOptions as $accident_visualOption) {
-            $selected = ($accident_visual == $accident_visualOption) ? 'selected' : '';
-            echo "<option value='$accident_visualOption' $selected>$accident_visualOption</option>";
-        }
-        ?>
-        <option value="other" <?php echo ($accident_visual == 'other') ? 'selected' : ''; ?>>Other</option>
-    </select>
-
-    <!-- Input field for 'Other' option -->
-    <input type="text" id="other_accident_visual" name="other_accident_visual" placeholder="Please specify" style="display: none; margin-top: 10px;" value="<?php echo ($accident_visual == 'other') ? htmlspecialchars($other_accident_visual) : ''; ?>" />
-
-</div>
-
-        <div class="form-group">
-            <label for="fuel">Yakit | Fuel:</label>
-            <select id="fuel" name="fuel"  required>
-                <option value="" disabled <?php echo empty($fuel) ? 'selected' : ''; ?>>Select</option>
-                <?php
-                $fuelOptions = ["PETROL/BENZENE", "DIESEL/DIZEL"];
-                foreach ($fuelOptions as $fuelOption) {
-                    $selected = ($fuel == $fuelOption) ? 'selected' : '';
-                    echo "<option value='$fuelOption' $selected>$fuelOption</option>";
-                }
-                ?>
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label for="brand">Marka | Brand:</label>
-            <select id="brand" name="brand" onchange="updateModels()">
-                <option value="" disabled <?php echo empty($brand) ? 'selected' : ''; ?>>Select</option>
-                <?php
-                   $brands = ["Acura", "Alfa Romeo", "Audi", "BMW", "Chevrolet", "Chrysler", "Citroen", "Dodge", "Fiat", "Ford", "Honda", "Hyundai", "Infiniti", "Jaguar", "Kia", "Lexus","Maybach", "Mazda", "Mercedes-Benz", "Nissan", "Peugeot", "Renault", "Subaru", "Toyota", "Volkswagen"];
-                foreach ($brands as $brandOption) {
-                    $selected = ($brand == $brandOption) ? 'selected' : '';
-                    echo "<option value='$brandOption' $selected>$brandOption</option>";
-                }
-                ?>
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label for="model">Modeli | Model:</label>
-            <select id="model" name="model"  >
-                <option value="" disabled <?php echo empty($model) ? 'selected' : ''; ?>>Select</option>
-            </select>
-        </div>
-
-        <!-- File Upload -->
-      <!-- File Upload -->
+<!-- Car Images -->
 <div class="form-group">
     <label for="image">Car Image:</label>
     <input type="file" id="image" name="image" <?php echo isset($_GET['edit_id']) ? '' : 'required'; ?> />
     <?php
     if (!empty($image) && $_SERVER['REQUEST_METHOD'] == 'GET' && isset($_GET['edit_id'])) {
-        echo "<p>Current Image: <img src='uploads/$image' alt='Car Image' width='100' /></p>";
+        echo "<p>Current Image: <img src='uploads/thumb_" . $image . "' alt='Car Image' width='100' loading='lazy' /></p>";
     }
     ?>
 
-<label for="image2">Car Image2:</label>
+    <label for="image2">Car Image2:</label>
     <input type="file" id="image2" name="image2" <?php echo isset($_GET['edit_id']) ? '' : 'required'; ?> />
     <?php
     if (!empty($image2) && $_SERVER['REQUEST_METHOD'] == 'GET' && isset($_GET['edit_id'])) {
-        echo "<p>Current Image2: <img src='uploads/$image2' alt='Car Image2' width='100' /></p>";
+        echo "<p>Current Image2: <img src='uploads/thumb_" . $image2 . "' alt='Car Image2' width='100' loading='lazy' /></p>";
     }
     ?>
 
-<label for="image3">Car Image3:</label>
+    <label for="image3">Car Image3:</label>
     <input type="file" id="image3" name="image3" <?php echo isset($_GET['edit_id']) ? '' : 'required'; ?> />
     <?php
     if (!empty($image3) && $_SERVER['REQUEST_METHOD'] == 'GET' && isset($_GET['edit_id'])) {
-        echo "<p>Current Image3: <img src='uploads/$image3' alt='Car Image3' width='100' /></p>";
+        echo "<p>Current Image3: <img src='uploads/thumb_" . $image3 . "' alt='Car Image3' width='100' loading='lazy' /></p>";
     }
     ?>
+
     <label for="image4">Car Image4:</label>
     <input type="file" id="image4" name="image4" <?php echo isset($_GET['edit_id']) ? '' : 'required'; ?> />
     <?php
     if (!empty($image4) && $_SERVER['REQUEST_METHOD'] == 'GET' && isset($_GET['edit_id'])) {
-        echo "<p>Current Image4: <img src='uploads/$image4' alt='Car Image4' width='100' /></p>";
+        echo "<p>Current Image4: <img src='uploads/thumb_" . $image4 . "' alt='Car Image4' width='100' loading='lazy' /></p>";
     }
     ?>
 </div>
 
-        
+
         <button type="submit"><?php echo isset($_GET['edit_id']) ? 'Update Car' : 'Add Car'; ?></button>
     </form>
-
- 
 </div>
+
 
 <div class="action-links">
        <a href="home.php">Back To Home</a>
@@ -490,6 +714,7 @@ foreach ($fields as $id => $label) {
             "Nissan": ["350 Z", "370 Z", "Almera", "Altima", "Bluebird", "Cedric", "Cube", "Datsun", "Skyline", "Sunny", "Tiida", "X-Trail"]
 };
 
+      
         function updateMSF() {
             var msfValue = document.getElementById("msf_value")?.value || "";
             var currency = document.getElementById("currency_selector1")?.value || "";
@@ -512,6 +737,7 @@ foreach ($fields as $id => $label) {
             var msfCurrency = document.getElementById("currency_selector1").value;
             var dsfCurrency = document.getElementById("currency_selector2").value;
             var gsfCurrency = document.getElementById("currency_selector4").value;
+            var chasisCurrency = document.getElementById("currency_selector5").value;
 
             // Check if any currency is not selected
             if (!msfCurrency || !dsfCurrency || !gsfCurrency) {
@@ -537,6 +763,8 @@ window.onload = function() {
     toggleOtherField();
 }
 
+
+
         // Add event listeners only if elements exist
         document.addEventListener("DOMContentLoaded", function () {
             var msfInput = document.getElementById("msf_value");
@@ -545,6 +773,9 @@ window.onload = function() {
             var dsfCurrency = document.getElementById("currency_selector2");
             var gsfInput = document.getElementById("gsf_value");
             var gsfCurrency = document.getElementById("currency_selector4");
+            var chasisCurrency = document.getElementById("currency_selector5");
+            var chasisInput = document.getElementById("chasis_value");
+            
 
             if (msfInput) msfInput.addEventListener("input", updateMSF);
             if (msfCurrency) msfCurrency.addEventListener("change", updateMSF);
@@ -552,7 +783,26 @@ window.onload = function() {
             if (dsfCurrency) dsfCurrency.addEventListener("change", updateDSF);
             if (gsfInput) gsfInput.addEventListener( "input", updateGSF);
             if (gsfCurrency) gsfCurrency.addEventListener("change", updateGSF);
+            if (chasisCurrency) chasisCurrency.addEventListener("change", updatechasis);
+            if (chasisInput) chasisInput.addEventListener( "input", updatechasis);
+           
         });
+        
+        
+    document.querySelector("form").addEventListener("submit", function(event) {
+        const plateInput = document.getElementById("plate");
+        const plate = plateInput.value.trim();
+        const platePattern = /^[A-Z]{2} \d{3}$/; // Matches format like "VV 700"
+
+        // Check if the plate matches the required format
+        if (!platePattern.test(plate)) {
+            document.getElementById("plateError").style.display = "inline"; // Show error message
+            event.preventDefault(); // Prevent form submission
+        } else {
+            document.getElementById("plateError").style.display = "none"; // Hide error message
+        }
+    });
+
 
         function update_km_mile() {
             var km_mile_Value = document.getElementById("km_mile_value").value;
@@ -605,6 +855,35 @@ window.onload = function() {
         }
     };
 </script>
+
+
+<?php
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $brand = $_POST['brand'] ?? '';
+    $model = $_POST['model'] ?? '';
+    $chasis = $_POST['chasis'] ?? ''; // This now contains "WDB123456789"
+
+    // Database connection
+    $conn = new mysqli("localhost", "root", "", "cars_db");
+
+    if ($conn->connect_error) {
+        die("Connection failed: " . $conn->connect_error);
+    }
+
+    // SQL Insert (Modify based on your table structure)
+    $stmt = $conn->prepare("INSERT INTO car_data (brand, model, chasis) VALUES (?, ?, ?)");
+    $stmt->bind_param("sss", $brand, $model, $chasis);
+
+    if ($stmt->execute()) {
+        echo "Record saved successfully!";
+    } else {
+        echo "Error: " . $stmt->error;
+    }
+
+    $stmt->close();
+    $conn->close();
+}
+?>
 
 </body>
 

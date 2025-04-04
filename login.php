@@ -1,7 +1,16 @@
 <?php
 session_start();
 include('db_connection.php'); // Your database connection file
+// Check if the logout parameter is set in the URL
+if (isset($_GET['logout']) && $_GET['logout'] == 'true') {
+    // Destroy the session to log the user out
+    session_unset();
+    session_destroy();
 
+    // Redirect the user to the login page after logging out
+    header("Location: login.php");
+    exit();
+}
 // Handle Login
 if (isset($_POST['login'])) {
     $username = $_POST['username'];
@@ -25,6 +34,8 @@ if (isset($_POST['login'])) {
         $error_message = "Invalid username or password.";
     }
 }
+
+
 ?>
 
 <!DOCTYPE html>

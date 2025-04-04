@@ -3,8 +3,14 @@ session_start();
 
 // Check if the user is logged in
 if (!isset($_SESSION['user_id'])) {
-    echo "You need to be logged in to view car details.";
-    exit;
+    // If the user is not logged in, display the message and a button to go back to login
+    echo '
+    <div style="text-align: center; margin-top: 50px; background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 20px; border-radius: 8px;">
+        <h2>You need to be logged in to view car details.</h2>
+        <p>Please log in first.</p>
+        <a href="login.php" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Go to Login</a>
+    </div>';
+    exit;  // Stop the script from executing further
 }
 $username = $_SESSION['username'] ?? 'User';  // Default to 'User' if username is not set
 
@@ -147,11 +153,13 @@ $viewCarsLink = ($role === 'admin') ? 'display.php' : 'userdisplay.php';
             <h1>Welcome to the Car Management System</h1>
             <p>Manage your car details with ease. Select an option below:</p>
             
-            <div class="button-container">
-                <a href="index.php" class="btn-home add-car-btn">➕ Add New Car</a>
-                <a href="<?php echo $viewCarsLink; ?>" class="btn-home view-cars-btn">🚗 View Car Details</a>
-                <a href="login.php" class="btn-home signout-btn">🚪 Sign Out</a>
+                    <div class="button-container">
+            <a href="index.php" class="btn-home add-car-btn">➕ Add New Car</a>
+            <a href="<?php echo $viewCarsLink; ?>" class="btn-home view-cars-btn">🚗 View Car Details</a>
+            <!-- Modify the sign-out link to include a query parameter -->
+            <a href="login.php?logout=true" class="btn-home signout-btn">🚪 Sign Out</a>
             </div>
+
         </div>
     </div>
 </body>

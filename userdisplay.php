@@ -2,6 +2,19 @@
 include('db_connection.php');
 session_start();
 
+// Check if the user is logged in
+if (!isset($_SESSION['user_id'])) {
+    // If the user is not logged in, display the message and a button to go back to login
+    echo '
+    <div style="text-align: center; margin-top: 50px; background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 20px; border-radius: 8px;">
+        <h2>You need to be logged in to view car details.</h2>
+        <p>Please log in first.</p>
+        <a href="login.php" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Go to Login</a>
+    </div>';
+    exit;  // Stop the script from executing further
+}
+
+
 
 // Initialize variables
 $search_query = '';
