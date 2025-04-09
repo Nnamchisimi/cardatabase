@@ -1,8 +1,15 @@
 <?php
-
-
-session_start(); // Start the session to access session variables
+session_start();
 include('db_connection.php');
+
+// Function to get the current timestamp in Turkey's timezone
+function getCurrentTimestamp() {
+    // Set the timezone to Turkey's timezone (UTC+3)
+    date_default_timezone_set('Europe/Istanbul');
+    
+    // Return the formatted date in "Y-m-d H:i:s"
+    return date("Y-m-d H:i:s");
+}
 
 // Check if the user is logged in
 if (!isset($_SESSION['user_id'])) {
@@ -16,12 +23,6 @@ if (!isset($_SESSION['user_id'])) {
     exit;  // Stop the script from executing further
 }
 
-
-
-// Check if the user is logged in
-if (!isset($_SESSION['username'])) {
-    die("You need to be logged in to edit data.");
-}
 // Check if we are editing an existing car
 if (isset($_GET['edit_id'])) {
     $edit_id = $_GET['edit_id'];
@@ -49,17 +50,29 @@ if (isset($_GET['edit_id'])) {
         $fuel = $row['fuel'];
         $expense_detail = $row['expense_detail'];
         $current_expense = $row['current_total_expense'];
-        $image = $row['image']; // Get the image filename if exists
-        $image2 = $row['image2']; // Get the image filename if exists
-        $image3 = $row['image3']; // Get the image filename if exists
-        $image4 = $row['image4']; // Get the image filename if exists
+        $image = $row['image'];
+        $image2 = $row['image2'];
+        $image3 = $row['image3'];
+        $image4 = $row['image4'];
+        
+        
+        // Now, extract km_value and km_unit from km_mile (like "25 KM" or "25 MILE")
+        $km_value = ''; // Default empty value for numeric part
+        $km_unit = ''; // Default empty value for unit (KM or MILE)
+        
+        if (!empty($km_mile)) {
+            // Split km_mile into numeric value and unit
+            $parts = explode(' ', trim($km_mile));
+            $km_value = isset($parts[0]) ? $parts[0] : '';  // The numeric part (e.g., 25)
+            $km_unit = isset($parts[1]) ? strtoupper($parts[1]) : '';  // The unit part (KM or MILE)
+            }
     }
 } else {
     // Default values for a new car entry
     $customer_name = $plate = $chasis = $brand = $year = $model = $km_mile = $accident_visual = $accident_tramer = $msf = $dsf = $gsf = $package = $color = $engine = $gear = $fuel = $expense_detail = $current_expense = $image = $image2 = $image3 = $image4 = '';
+        $km_value = ''; // Default empty value for numeric part
+        $km_unit = '';  // Default empty value for unit (KM or MILE)
 }
-
-
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $customer_name = $_POST['customer_name'];
@@ -82,141 +95,88 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $expense_detail = $_POST['expense_detail'];
     $current_expense = $_POST['current_expense'];
 
-        // Process the km_mile field before inserting into the database
-        if (!empty($km_mile)) {
-            // Remove any non-numeric characters except for the decimal point
-            $km_mile_numeric = preg_replace('/[^0-9.]/', '', $km_mile);
-            $km_mile = floatval($km_mile_numeric); // Convert it to a float
-        } else {
-            $km_mile = NULL; // If the km_mile is empty, set it to NULL or 0 based on your preference
-        }
-        function compressAndResizeImage($source, $destination, $quality = 70, $thumb = false) {
-            $info = getimagesize($source);
-            if ($info === false) return false;
-        
-            $mime = $info['mime'];
-            switch ($mime) {
-                case 'image/jpeg':
-                    $image = imagecreatefromjpeg($source);
-                    break;
-                case 'image/png':
-                    $image = imagecreatefrompng($source);
-                    break;
-                case 'image/gif':
-                    $image = imagecreatefromgif($source);
-                    break;
-                default:
-                    return false; // Unsupported format
-            }
-        
-            // Resize for thumbnail if requested
-            if ($thumb) {
-                $thumbWidth = 150;
-                $thumbHeight = 150;
-                $srcWidth = imagesx($image);
-                $srcHeight = imagesy($image);
-                $tmp = imagecreatetruecolor($thumbWidth, $thumbHeight);
-                imagecopyresampled($tmp, $image, 0, 0, 0, 0, $thumbWidth, $thumbHeight, $srcWidth, $srcHeight);
-                $image = $tmp;
-            }
-        
-            // Save the image
-            switch ($mime) {
-                case 'image/jpeg':
-                    imagejpeg($image, $destination, $quality);
-                    break;
-                case 'image/png':
-                    imagepng($image, $destination, 9 - round($quality / 10)); // Quality for PNG is 0-9
-                    break;
-                case 'image/gif':
-                    imagegif($image, $destination);
-                    break;
-            }
-        
-            // Free memory
-            imagedestroy($image);
-            return true;
-        }
-        
-        // Function to process existing images and generate thumbnails if they don't exist
-        function processExistingImages($image) {
-            $uploadPath = 'uploads/' . $image;
-            $thumbPath = 'uploads/thumb_' . $image;
-        
-            // Check if the thumbnail exists, if not, generate it
-            if (file_exists($uploadPath) && !file_exists($thumbPath)) {
-                compressAndResizeImage($uploadPath, $thumbPath, 60, true); // Create a thumbnail if it doesn't exist
-            }
-        }
-        
-        // Handle image uploads
-        $image = handleImageUpload('image');
-        $image2 = handleImageUpload('image2');
-        $image3 = handleImageUpload('image3');
-        $image4 = handleImageUpload('image4');
-        
-        // Handle existing images on edit if no new image is uploaded
-        if (!$image && isset($_GET['edit_id'])) {
-            $image = $row['image'];
-        }
-        if (!$image2 && isset($_GET['edit_id'])) {
-            $image2 = $row['image2'];
-        }
-        if (!$image3 && isset($_GET['edit_id'])) {
-            $image3 = $row['image3'];
-        }
-        if (!$image4 && isset($_GET['edit_id'])) {
-            $image4 = $row['image4'];
-        }
-        
-        // Process existing images to generate thumbnails if needed
-        if ($image) {
-            processExistingImages($image); // Check and generate thumbnail for image
-        }
-        if ($image2) {
-            processExistingImages($image2); // Check and generate thumbnail for image2
-        }
-        if ($image3) {
-            processExistingImages($image3); // Check and generate thumbnail for image3
-        }
-        if ($image4) {
-            processExistingImages($image4); // Check and generate thumbnail for image4
-        }
+ 
+    // Handle file upload for images
+    if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
+        $image = $_FILES['image']['name'];
+        $image_tmp = $_FILES['image']['tmp_name'];
+        $image_folder = 'uploads/' . $image;
+        move_uploaded_file($image_tmp, $image_folder);
+    } elseif (isset($_GET['edit_id'])) {
+        // Keep the existing image if it's being updated and no new image is uploaded
+        $image = $row['image'];
+    }
+
+    // Handle file upload for second image
+    if (isset($_FILES['image2']) && $_FILES['image2']['error'] == 0) {
+        $image2 = $_FILES['image2']['name'];
+        $image_tmp2 = $_FILES['image2']['tmp_name'];
+        $image_folder2 = 'uploads/' . $image2;
+        move_uploaded_file($image_tmp2, $image_folder2);
+    } elseif (isset($_GET['edit_id'])) {
+        // Keep the existing image if it's being updated and no new image is uploaded
+        $image2 = $row['image2'];
+    }
+
+    // Handle file upload for third image
+    if (isset($_FILES['image3']) && $_FILES['image3']['error'] == 0) {
+        $image3 = $_FILES['image3']['name'];
+        $image_tmp3 = $_FILES['image3']['tmp_name'];
+        $image_folder3 = 'uploads/' . $image3;
+        move_uploaded_file($image_tmp3, $image_folder3);
+    } elseif (isset($_GET['edit_id'])) {
+        // Keep the existing image if it's being updated and no new image is uploaded
+        $image3 = $row['image3'];
+    }
+
+    // Handle file upload for fourth image
+    if (isset($_FILES['image4']) && $_FILES['image4']['error'] == 0) {
+        $image4 = $_FILES['image4']['name'];
+        $image_tmp4 = $_FILES['image4']['tmp_name'];
+        $image_folder4 = 'uploads/' . $image4;
+        move_uploaded_file($image_tmp4, $image_folder4);
+    } elseif (isset($_GET['edit_id'])) {
+        // Keep the existing image if it's being updated and no new image is uploaded
+        $image4 = $row['image4'];
+    }
+
+    // Get the current timestamp for created_at and updated_at
+    $timestamp = getCurrentTimestamp();
 
     if (isset($_GET['edit_id'])) {
         // Update the car details
-        $sql = "UPDATE cars SET customer_name = '$customer_name', plate = '$plate', chasis = '$chasis', brand = '$brand', year = '$year', model = '$model', km_mile = '$km_mile', accident_visual = '$accident_visual', accident_tramer = '$accident_tramer', msf = '$msf', dsf = '$dsf', gsf='$gsf', package = '$package', color = '$color', engine = '$engine', gear = '$gear', fuel = '$fuel', expense_detail = '$expense_detail', current_total_expense = '$current_expense', image = '$image' , image2 = '$image2', image3 = '$image3', image4 = '$image4',updated_by = '{$_SESSION['username']}' WHERE id = '$edit_id'";
+        $sql = "UPDATE cars SET customer_name = '$customer_name', plate = '$plate', chasis = '$chasis', brand = '$brand', year = '$year', model = '$model', km_mile = '$km_mile', accident_visual = '$accident_visual', accident_tramer = '$accident_tramer', msf = '$msf', dsf = '$dsf', gsf = '$gsf', package = '$package', color = '$color', engine = '$engine', gear = '$gear', fuel = '$fuel', expense_detail = '$expense_detail', current_total_expense = '$current_expense', image = '$image', image2 = '$image2', image3 = '$image3', image4 = '$image4', updated_at = '$timestamp', updated_by = '{$_SESSION['username']}' WHERE id = '$edit_id'";
+
         if ($conn->query($sql) === TRUE) {
             // Clear form after successful submission
-            unset($customer_name, $plate,$chasis, $brand,$year, $model, $km_mile, $accident_visual, $accident_tramer, $msf, $dsf, $gsf, $package, $color, $engine, $gear, $fuel, $expense_detail, $current_expense,$image, $image2,$image3,$image4);
-       
-                  // ✅ **ADD REDIRECT BASED ON USER ROLE HERE**
-        if ($_SESSION['role'] === 'admin') {
-            header("Location: display.php");
-        } else {
-            header("Location: userdisplay.php");
-        }
-        exit(); // Stop further execution
-       
-       
-        } else {
-            echo "Error: " . $conn->error;
-        }
-    } else {
-        // Insert new car data
-        $sql = "INSERT INTO cars (customer_name, plate, chasis, brand, year, model, km_mile, accident_visual, accident_tramer, msf, dsf, gsf, package, color, engine, gear, fuel, expense_detail, current_total_expense,image,image2,image3,image4, created_by ) 
-        VALUES ('$customer_name', '$plate', '$chasis', '$brand','$year' ,'$model', '$km_mile', '$accident_visual', '$accident_tramer', '$msf', '$dsf','$gsf', '$package', '$color', '$engine', '$gear', '$fuel', '$expense_detail', '$current_expense', '$image','$image2','$image3','$image4','{$_SESSION['username']}')";
-        if ($conn->query($sql) === TRUE) {
-            // Clear form after successful submission
-            unset($customer_name, $plate,$chasis, $brand,$year, $model, $km_mile, $accident_visual, $accident_tramer, $msf, $dsf, $gsf, $package, $color, $engine, $gear, $fuel, $expense_detail, $current_expense);
-              // ✅ **ADD REDIRECT BASED ON USER ROLE HERE**
-              if ($_SESSION['role'] === 'admin') {
+            unset($customer_name, $plate, $chasis, $brand, $year, $model, $km_mile, $accident_visual, $accident_tramer, $msf, $dsf, $gsf, $package, $color, $engine, $gear, $fuel, $expense_detail, $current_expense, $image, $image2, $image3, $image4);
+
+            // ✅ **ADD REDIRECT BASED ON USER ROLE HERE**
+            if ($_SESSION['role'] === 'admin') {
                 header("Location: display.php");
             } else {
                 header("Location: userdisplay.php");
             }
             exit(); // Stop further execution
-        
+        } else {
+            echo "Error: " . $conn->error;
+        }
+    } else {
+        // Insert new car data
+        $sql = "INSERT INTO cars (customer_name, plate, chasis, brand, year, model, km_mile, accident_visual, accident_tramer, msf, dsf, gsf, package, color, engine, gear, fuel, expense_detail, current_total_expense, image, image2, image3, image4, created_at, created_by) 
+        VALUES ('$customer_name', '$plate', '$chasis', '$brand', '$year', '$model', '$km_mile', '$accident_visual', '$accident_tramer', '$msf', '$dsf', '$gsf', '$package', '$color', '$engine', '$gear', '$fuel', '$expense_detail', '$current_expense', '$image', '$image2', '$image3', '$image4', '$timestamp', '{$_SESSION['username']}')";
+
+        if ($conn->query($sql) === TRUE) {
+            // Clear form after successful submission
+            unset($customer_name, $plate, $chasis, $brand, $year, $model, $km_mile, $accident_visual, $accident_tramer, $msf, $dsf, $gsf, $package, $color, $engine, $gear, $fuel, $expense_detail, $current_expense);
+
+            // ✅ **ADD REDIRECT BASED ON USER ROLE HERE**
+            if ($_SESSION['role'] === 'admin') {
+                header("Location: display.php");
+            } else {
+                header("Location: userdisplay.php");
+            }
+            exit(); // Stop further execution
         } else {
             echo "Error: " . $conn->error;
         }
@@ -227,12 +187,14 @@ $conn->close();
 ?>
 
 
+
 <body>
 
 <header>
     <h1>SERHAN KOMBOS OTOMOTIV</h1>
     <h2><?php echo isset($_GET['edit_id']) ? 'Update Database' : 'Car Database'; ?></h2>
 </header>
+
 
 <div class="container">
 
@@ -244,7 +206,7 @@ $conn->close();
             <input type="text" id="customer_name" name="customer_name" value="<?php echo isset($customer_name) ? htmlspecialchars($customer_name) : ''; ?>" required />
         </div>
 
-       <!-- Plaka | Plate -->
+        <!-- Plaka | Plate -->
 <div class="form-group">
     <label for="plate">Plaka | Plate:</label>
     <input 
@@ -258,7 +220,9 @@ $conn->close();
     <small id="plateError" style="color: red; display: none;">Please enter the plate in the format "XX 000" (two letters and three digits).</small>
 </div>
 
-<?php
+
+        <!-- Şasi Numarasi | Chasis Number -->
+       <?php
     $chasis = isset($chasis) ? $chasis : ''; // Default empty string if $chasis is not set
 
     // Extract numeric price and currency separately for msf
@@ -364,13 +328,9 @@ $conn->close();
 </script>
 
 
-
-
-        
-
         <div class="form-group">
             <label for="brand">Marka | Brand:</label>
-            <select id="brand" name="brand" onchange="updateModels()"required>
+            <select id="brand" name="brand" onchange="updateModels()">
                 <option value="" disabled <?php echo empty($brand) ? 'selected' : ''; ?>>Select</option>
                 <?php
                    $brands = ["Acura", "Alfa Romeo", "Audi", "BMW", "Chevrolet", "Chrysler", "Citroen", "Dodge", "Fiat", "Ford", "Honda", "Hyundai", "Infiniti", "Jaguar", "Kia", "Lexus","Maybach", "Mazda", "Mercedes-Benz", "Nissan", "Peugeot", "Renault", "Subaru", "Toyota", "Volkswagen"];
@@ -384,7 +344,7 @@ $conn->close();
 
         <div class="form-group">
             <label for="model">Modeli | Model:</label>
-            <select id="model" name="model"  required>
+            <select id="model" name="model"  >
                 <option value="" disabled <?php echo empty($model) ? 'selected' : ''; ?>>Select</option>
             </select>
         </div>
@@ -424,19 +384,23 @@ $conn->close();
             </select>
         </div>
 
-        <!-- Mil/KM | Mile/KM -->
-        <div class="form-group">
-            <label for="km_mile">Mil/KM | Mile/KM:</label>
-            <div style="display: flex; gap: 10px; align-items: center;">
-                <input type="number" id="km_mile_value" name="km_mile_value" step="0.01" placeholder="Enter value" value="<?php echo isset($km_mile) ? htmlspecialchars($km_mile) : ''; ?>" required />
-                <select id="currency_selector3" name="currency_selector3" onchange="update_km_mile()" required>
-                    <option value="" disabled <?php echo empty($km_mile) ? 'selected' : ''; ?>>Select</option>
-                    <option value="KM" <?php echo ($km_mile && strpos($km_mile, 'KM') !== false) ? 'selected' : ''; ?>>KM</option>
-                    <option value="MILE" <?php echo ($km_mile && strpos($km_mile, 'MILE') !== false) ? 'selected' : ''; ?>>MILE</option>
-                </select>
-                <input type="hidden" id="km_mile" name="km_mile" value="<?php echo isset($km_mile) ? htmlspecialchars($km_mile) : ''; ?>" />
-            </div>
+   <div class="form-group">
+        <label for="km_mile">Mil/KM | Mile/KM:</label>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <!-- Input for the numeric value -->
+            <input type="number" id="km_mile_value" name="km_mile_value" step="0.01" placeholder="Enter value" value="<?php echo htmlspecialchars($km_value); ?>" required />
+
+            <!-- Dropdown to select either KM or MILE -->
+            <select id="currency_selector3" name="currency_selector3" required>
+                <option value="" disabled <?php echo empty($km_unit) ? 'selected' : ''; ?>>Select</option>
+                <option value="KM" <?php echo ($km_unit === 'KM') ? 'selected' : ''; ?>>KM</option>
+                <option value="MILE" <?php echo ($km_unit === 'MILE') ? 'selected' : ''; ?>>MILE</option>
+            </select>
+
+            <!-- Hidden input to store the combined value -->
+            <input type="hidden" id="km_mile" name="km_mile" value="<?php echo htmlspecialchars($km_mile); ?>" />
         </div>
+    </div>
 
         <!-- Yakit | Fuel -->
         <div class="form-group">
@@ -507,8 +471,6 @@ $conn->close();
                 $msf = isset($msf) ? $msf : ''; // Default empty string if $msf is not set
                 $dsf = isset($dsf) ? $dsf : ''; // Default empty string if $dsf is not set
                 $gsf = isset($gsf) ? $gsf : ''; // Default empty string if $gsf is not set
-               
-              
 
                 // Extract numeric price and currency separately for msf
                 $msf_parts = explode(" ", $msf);
@@ -527,8 +489,6 @@ $conn->close();
 
             
             ?>
-            
-      
 
            <!-- Müşteri Satiş Fiyati (MSF) -->
            <div class="form-group">
@@ -564,9 +524,9 @@ $conn->close();
         <div class="form-group">
             <label for="gsf">Gerçekleşen Satiş Fiyati (GSF):</label>
             <div style="display: flex; gap: 10px; align-items: center;">
-                <input type="number" id="gsf_value" step="0.01" placeholder="Enter price(Optional)" value="<?php echo htmlspecialchars($gsf_value); ?>" />
+                <input type="number" id="gsf_value" step="0.01" placeholder="(optional)" value="<?php echo htmlspecialchars($gsf_value); ?>"  />
                 <select id="currency_selector4" onchange="updateGSF()" >
-                    <option value="" disabled <?php echo empty($gsf_currency) ? 'selected' : ''; ?>>Select(optional)</option>
+                    <option value="" disabled <?php echo empty($gsf_currency) ? 'selected' : ''; ?>>Select</option>
                     <option value="STG" <?php echo ($msf_currency == 'STG') ? 'selected' : ''; ?>>£ STG</option>
                     <option value="EUR" <?php echo($gsf_currency == 'EUR') ? 'selected' : ''; ?>>€ EUR</option>
                     <option value="TL" <?php echo ($gsf_currency == 'TL') ? 'selected' : ''; ?>>₺ TL</option>
@@ -575,40 +535,101 @@ $conn->close();
             </div>
         </div>
 
-<!-- Car Images -->
+        <!-- Car Images -->
+        <!-- File Upload -->
+<!-- Car Image 1 -->
 <div class="form-group">
     <label for="image">Car Image:</label>
-    <input type="file" id="image" name="image" <?php echo isset($_GET['edit_id']) ? '' : 'required'; ?> />
+    <input 
+        type="file" 
+        id="image" 
+        name="image" 
+        <?php echo isset($_GET['edit_id']) ? '' : 'required'; ?> 
+        onchange="checkImageOrientation(this, 'image-warning')" 
+    />
     <?php
     if (!empty($image) && $_SERVER['REQUEST_METHOD'] == 'GET' && isset($_GET['edit_id'])) {
-        echo "<p>Current Image: <img src='uploads/thumb_" . $image . "' alt='Car Image' width='100' loading='lazy' /></p>";
+        echo "<p>Current Image: <img src='uploads/$image' alt='Car Image' width='100' /></p>";
     }
     ?>
+    <span id="image-warning" style="color: red; display: none;"></span>
+</div>
 
+<!-- Car Image 2 -->
+<div class="form-group">
     <label for="image2">Car Image2:</label>
-    <input type="file" id="image2" name="image2" <?php echo isset($_GET['edit_id']) ? '' : 'required'; ?> />
+    <input 
+        type="file" 
+        id="image2" 
+        name="image2" 
+        <?php echo isset($_GET['edit_id']) ? '' : 'required'; ?> 
+        onchange="checkImageOrientation(this, 'image2-warning')" 
+    />
     <?php
     if (!empty($image2) && $_SERVER['REQUEST_METHOD'] == 'GET' && isset($_GET['edit_id'])) {
-        echo "<p>Current Image2: <img src='uploads/thumb_" . $image2 . "' alt='Car Image2' width='100' loading='lazy' /></p>";
+        echo "<p>Current Image2: <img src='uploads/$image2' alt='Car Image2' width='100' /></p>";
     }
     ?>
+    <span id="image2-warning" style="color: red; display: none;"></span>
+</div>
 
+<!-- Car Image 3 -->
+<div class="form-group">
     <label for="image3">Car Image3:</label>
-    <input type="file" id="image3" name="image3" <?php echo isset($_GET['edit_id']) ? '' : 'required'; ?> />
+    <input 
+        type="file" 
+        id="image3" 
+        name="image3" 
+        <?php echo isset($_GET['edit_id']) ? '' : 'required'; ?> 
+        onchange="checkImageOrientation(this, 'image3-warning')" 
+    />
     <?php
     if (!empty($image3) && $_SERVER['REQUEST_METHOD'] == 'GET' && isset($_GET['edit_id'])) {
-        echo "<p>Current Image3: <img src='uploads/thumb_" . $image3 . "' alt='Car Image3' width='100' loading='lazy' /></p>";
+        echo "<p>Current Image3: <img src='uploads/$image3' alt='Car Image3' width='100' /></p>";
     }
     ?>
+    <span id="image3-warning" style="color: red; display: none;"></span>
+</div>
 
+<!-- Car Image 4 -->
+<div class="form-group">
     <label for="image4">Car Image4:</label>
-    <input type="file" id="image4" name="image4" <?php echo isset($_GET['edit_id']) ? '' : 'required'; ?> />
+    <input 
+        type="file" 
+        id="image4" 
+        name="image4" 
+        <?php echo isset($_GET['edit_id']) ? '' : 'required'; ?> 
+        onchange="checkImageOrientation(this, 'image4-warning')" 
+    />
     <?php
     if (!empty($image4) && $_SERVER['REQUEST_METHOD'] == 'GET' && isset($_GET['edit_id'])) {
-        echo "<p>Current Image4: <img src='uploads/thumb_" . $image4 . "' alt='Car Image4' width='100' loading='lazy' /></p>";
+        echo "<p>Current Image4: <img src='uploads/$image4' alt='Car Image4' width='100' /></p>";
     }
     ?>
+    <span id="image4-warning" style="color: red; display: none;"></span>
 </div>
+
+
+<script>
+    function checkImageOrientation(input, warningId) {
+        var file = input.files[0];
+        var img = new Image();
+
+        img.onload = function() {
+            if (img.width > img.height) {
+                // Image is in landscape orientation
+                document.getElementById(warningId).style.display = "none";
+                input.setCustomValidity(''); // Clear any previous custom validity
+            } else {
+                // Image is not in landscape orientation
+                document.getElementById(warningId).style.display = "block";
+                input.setCustomValidity("Image must be in landscape orientation.");
+            }
+        };
+
+        img.src = URL.createObjectURL(file);
+    }
+</script>
 
 
         <button type="submit"><?php echo isset($_GET['edit_id']) ? 'Update Car' : 'Add Car'; ?></button>
@@ -713,8 +734,8 @@ $conn->close();
 
             "Nissan": ["350 Z", "370 Z", "Almera", "Altima", "Bluebird", "Cedric", "Cube", "Datsun", "Skyline", "Sunny", "Tiida", "X-Trail"]
 };
-
-      
+   
+         
         function updateMSF() {
             var msfValue = document.getElementById("msf_value")?.value || "";
             var currency = document.getElementById("currency_selector1")?.value || "";
@@ -763,8 +784,6 @@ window.onload = function() {
     toggleOtherField();
 }
 
-
-
         // Add event listeners only if elements exist
         document.addEventListener("DOMContentLoaded", function () {
             var msfInput = document.getElementById("msf_value");
@@ -789,7 +808,7 @@ window.onload = function() {
         });
         
         
-    document.querySelector("form").addEventListener("submit", function(event) {
+        document.querySelector("form").addEventListener("submit", function(event) {
         const plateInput = document.getElementById("plate");
         const plate = plateInput.value.trim();
         const platePattern = /^[A-Z]{2} \d{3}$/; // Matches format like "VV 700"
@@ -803,15 +822,26 @@ window.onload = function() {
         }
     });
 
+                
+           function update_km_mile() {
+    var km_mile_Value = document.getElementById("km_mile_value").value;
+    var currency = document.getElementById("currency_selector3").value;
 
-        function update_km_mile() {
-            var km_mile_Value = document.getElementById("km_mile_value").value;
-            var currency = document.getElementById("currency_selector3").value;
-            document.getElementById("km_mile").value = km_mile_Value ? km_mile_Value + " " + currency : "";
-        }
+    // When both the numeric value and the unit are available, update the hidden input
+    if (km_mile_Value && currency) {
+        // Combine the numeric value with the unit (e.g., "25 KM" or "25 MILE")
+        var displayValue = km_mile_Value + " " + currency;
+        // Update the hidden input field (which will hold the value to submit)
+        document.getElementById("km_mile").value = displayValue;
+    }
+}
 
-        document.getElementById("km_mile_value").addEventListener("input", update_km_mile);
-        document.getElementById("currency_selector3").addEventListener("change", update_km_mile);
+// Add event listeners to update the hidden field when the user changes values
+document.getElementById("km_mile_value").addEventListener("input", update_km_mile);
+document.getElementById("currency_selector3").addEventListener("change", update_km_mile);
+
+
+
 
 
 
@@ -856,35 +886,6 @@ window.onload = function() {
     };
 </script>
 
-
-<?php
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $brand = $_POST['brand'] ?? '';
-    $model = $_POST['model'] ?? '';
-    $chasis = $_POST['chasis'] ?? ''; // This now contains "WDB123456789"
-
-    // Database connection
-    $conn = new mysqli("localhost", "root", "", "cars_db");
-
-    if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
-    }
-
-    // SQL Insert (Modify based on your table structure)
-    $stmt = $conn->prepare("INSERT INTO car_data (brand, model, chasis) VALUES (?, ?, ?)");
-    $stmt->bind_param("sss", $brand, $model, $chasis);
-
-    if ($stmt->execute()) {
-        echo "Record saved successfully!";
-    } else {
-        echo "Error: " . $stmt->error;
-    }
-
-    $stmt->close();
-    $conn->close();
-}
-?>
-
 </body>
 
 <!DOCTYPE html>
@@ -893,6 +894,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Car Database</title>
+         <link rel="icon" href="https://kombosapp.pythonanywhere.com/static/favicon.ico" type="image/x-icon">
     <style>
         body, html {
             margin: 0;

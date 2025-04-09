@@ -15,30 +15,72 @@ if (!isset($_SESSION['user_id'])) {
 
 // Initialize variables
 $search_query = '';
+$search_terms = [];
+$year_filter = '';
+$model_filter = '';
+$brand_filter = '';
 
 // Check if the search query is set in the URL
 if (isset($_GET['search'])) {
     $search_query = mysqli_real_escape_string($conn, $_GET['search']);  // sanitize input
     // Remove spaces and hyphens from the search query
     $search_query_cleaned = str_replace([' ', '-'], '', $search_query);
-    
-    // Search across plate, chasis, and customer_name columns
-    $sql = "SELECT * FROM cars WHERE 
-            (REPLACE(REPLACE(LOWER(plate), ' ', ''), '-', '') LIKE '%$search_query_cleaned%')  OR
-            chasis LIKE '%$search_query%' OR
-            customer_name LIKE '%$search_query%'";
+
+    // Split the search query into individual terms
+    $search_terms = explode(' ', $search_query);
+
+    // Determine filters based on the number of search terms
+    if (count($search_terms) == 1) {
+        // One term can be a brand, model, or year
+        $search_term = $search_terms[0];
+        $sql = "SELECT * FROM cars WHERE 
+                (brand LIKE '%$search_term%' OR 
+                 plate LIKE '%$search_term%' OR 
+                customer_name LIKE '%$search_term%' OR 
+                chasis LIKE '%$search_term%' OR 
+                model LIKE '%$search_term%' OR 
+                year LIKE '%$search_term%')";
+    } elseif (count($search_terms) == 2) {
+        // Two terms: handle brand + model, brand + year, or model + year
+        $term1 = $search_terms[0];
+        $term2 = $search_terms[1];
+        
+        $sql = "SELECT * FROM cars WHERE 
+                (brand LIKE '%$term1%' AND model LIKE '%$term2%') OR
+                (brand LIKE '%$term2%' AND model LIKE '%$term1%') OR
+                (brand LIKE '%$term1%' AND year LIKE '%$term2%') OR
+                (brand LIKE '%$term2%' AND year LIKE '%$term1%') OR
+                (model LIKE '%$term1%' AND year LIKE '%$term2%') OR
+                (model LIKE '%$term2%' AND year LIKE '%$term1%')";
+    } elseif (count($search_terms) == 3) {
+        // Three terms: brand + model + year, any order
+        $term1 = $search_terms[0];
+        $term2 = $search_terms[1];
+        $term3 = $search_terms[2];
+
+        $sql = "SELECT * FROM cars WHERE 
+                (brand LIKE '%$term1%' AND model LIKE '%$term2%' AND year LIKE '%$term3%') OR
+                (brand LIKE '%$term1%' AND model LIKE '%$term3%' AND year LIKE '%$term2%') OR
+                (brand LIKE '%$term2%' AND model LIKE '%$term1%' AND year LIKE '%$term3%') OR
+                (brand LIKE '%$term2%' AND model LIKE '%$term3%' AND year LIKE '%$term1%') OR
+                (brand LIKE '%$term3%' AND model LIKE '%$term1%' AND year LIKE '%$term2%') OR
+                (brand LIKE '%$term3%' AND model LIKE '%$term2%' AND year LIKE '%$term1%')";
+    }
 } else {
     $sql = "SELECT * FROM cars";
 }
 
+// Execute the query
 $result = $conn->query($sql);
-
 
 // Check if the query executed successfully
 if (!$result) {
     die("Error in query execution: " . $conn->error);
 }
 ?>
+
+
+
 
 
 
@@ -115,19 +157,15 @@ if (!$result) {
         margin-top: 20px;
         overflow-x: auto;
         display: block;
-        max-height: 530px;
+        max-height: 540px;
         overflow-y: auto;
     }
-    
-    table img {
-    width: 180px;             /* Fixed width for car image */
-    height: 120px;            /* Fixed height for car image */
-    object-fit: cover;        /* Make sure it fills but doesn't stretch */
-    object-position: center;
-    display: block;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    transition: transform 0.2s ease;
+    /* Styling the images in the table */
+  table img {
+      width: 200px;
+  height: 130px;
+  object-fit: contain;
+  border-radius: 15px;
 }
 
 td {
@@ -213,7 +251,7 @@ td {
         opacity: 0.8;
     }
 
-    .popup {
+  .popup {
         display: none;
         position: fixed;
         top: 50%;
@@ -231,9 +269,9 @@ td {
 
     .popup img {
         width: 50%;
+        height:50%;
         border-radius: 10px;
         cursor: pointer;
-        
     }
     .popup p {
     font-size: 14px; /* Set font size for the paragraph text */
@@ -484,46 +522,47 @@ td {
                         $image_path4 = $row['image4'] ? 'uploads/' . $row['image4'] : 'uploads/default.jpg'; // Default image2 if none is uploaded
 
                         echo "<tr>
-                        <td>
-    <img src='" . $image_path . "' onclick='showDetails(\"" . $row['customer_name'] . "\", \"" . $row['plate'] . "\", \"" . $row['chasis'] . "\", \"" . $row['brand'] . "\", \"" . $row['year'] . "\", \"" . $row['model'] . "\", \"" . $row['km_mile'] . "\", \"" . $row['accident_visual'] . "\", \"" . $row['accident_tramer'] . "\", \"" . $row['msf'] . "\", \"" . $row['dsf'] . "\", \"" . $row['gsf'] . "\", \"" . $row['package'] . "\", \"" . $row['color'] . "\", \"" . $row['engine'] . "\", \"" . $row['gear'] . "\", \"" . $row['fuel'] . "\", \"" . $row['expense_detail'] . "\", \"" . $row['current_total_expense'] . "\", \"" . $image_path . "\", \"" . $image_path2 . "\", \"" . $image_path3 . "\", \"" . $image_path4 . "\", \"" . $row['created_at'] . "\", \"" . $row['updated_at'] . "\", \"" . $row['created_by'] . "\", \"" . $row['updated_by'] . "\")'>
-</td>
+                           <td> 
+                                    <img src='" . $image_path . "' onclick='showDetails(\"" . $row['customer_name'] . "\", \"" . $row['plate'] . "\", \"" . $row['chasis'] . "\", \"" . $row['brand'] . "\", \"" . $row['year'] . "\", \"" . $row['model'] . "\", \"" . $row['km_mile'] . "\", \"" . $row['accident_visual'] . "\", \"" . $row['accident_tramer'] . "\", \"" . $row['msf'] . "\", \"" . $row['dsf'] . "\", \"" . $row['gsf'] . "\", \"" . $row['package'] . "\", \"" . $row['color'] . "\", \"" . $row['engine'] . "\", \"" . $row['gear'] . "\", \"" . $row['fuel'] . "\", \"" . $row['expense_detail'] . "\", \"" . $row['current_total_expense'] . "\", \"" . $image_path . "\", \"" . $image_path2 . "\", \"" . $image_path3 . "\", \"" . $image_path4 . "\", \"" . $row['created_at'] . "\", \"" . $row['updated_at'] . "\", \"" . $row['created_by'] . "\", \"" . $row['updated_by'] . "\")'>
+                                </td>
+                                
+                                <td>" . $row['customer_name'] . "</td>
+                                <td>" . $row['plate'] . "</td>
+                                <td>" . substr($row['chasis'], 0, 7) . "</td>
+                                <td>" . $row['brand'] . "</td>
+                                <td>" . $row['year'] . "</td>
+                                <td>" . $row['model'] . "</td>
+                                <td>" . $row['km_mile'] . "</td>
+                                <td>" . $row['accident_visual'] . "</td>
+                                <td>" . $row['accident_tramer'] . "</td>
+                                <td>" . $row['msf'] . "</td>
+                                <td>" . $row['dsf'] . "</td>
+                                <td>" . $row['gsf'] . "</td>
+                                <td>" . $row['package'] . "</td>
+                                <td>" . $row['color'] . "</td>
+                                <td>" . $row['engine'] . "</td>
+                                <td>" . $row['gear'] . "</td>
+                                <td>" . $row['fuel'] . "</td>
+                                <td>" . $row['expense_detail'] . "</td>
+                                <td>" . $row['current_total_expense'] . "</td>
+                                <td>" . $row['created_at'] . "</td>
+                                <td>" . $row['updated_at'] . "</td>       
+                                <td>" . $row['created_by'] . "</td>
+                                <td>" . $row['updated_by'] . "</td>
+                                
+                                <td>
+                                    <a href='index.php?edit_id=" . $row['id'] . "' class='btn btn-edit'>
+                                        Edit
+                                    </a>
+                                </td>
+                                
+                                <td>
+                                    <a href='delete.php?id=" . $row['id'] . "' class='btn btn-delete' onclick=\"return confirm('Are you sure you want to delete this record?');\">
+                                        Delete
+                                    </a>
+                                </td>
 
-<td>" . $row['customer_name'] . "</td>
-<td>" . $row['plate'] . "</td>
-<td>" . $row['chasis'] . "</td>
-<td>" . $row['brand'] . "</td>
-<td>" . $row['year'] . "</td>
-<td>" . $row['model'] . "</td>
-<td>" . $row['km_mile'] . "</td>
-<td>" . $row['accident_visual'] . "</td>
-<td>" . $row['accident_tramer'] . "</td>
-<td>" . $row['msf'] . "</td>
-<td>" . $row['dsf'] . "</td>
-<td>" . $row['gsf'] . "</td>
-<td>" . $row['package'] . "</td>
-<td>" . $row['color'] . "</td>
-<td>" . $row['engine'] . "</td>
-<td>" . $row['gear'] . "</td>
-<td>" . $row['fuel'] . "</td>
-<td>" . $row['expense_detail'] . "</td>
-<td>" . $row['current_total_expense'] . "</td>
-<td>" . $row['created_at'] . "</td>
-<td>" . $row['updated_at'] . "</td>       
-<td>" . $row['created_by'] . "</td>
-<td>" . $row['updated_by'] . "</td>
-
-<td>
-    <a href='index.php?edit_id=" . $row['id'] . "' class='btn btn-edit'>
-        Edit
-    </a>
-</td>
-
-<td>
-    <a href='delete.php?id=" . $row['id'] . "' class='btn btn-delete' onclick=\"return confirm('Are you sure you want to delete this record?');\">
-        Delete
-    </a>
-</td>
-
+                        
                         </tr>";
                     }
                     
@@ -541,36 +580,35 @@ td {
 
     <div class="overlay" id="overlay" onclick="closePopup()"></div>
 
-    <div class="popup" id="popup">
-    <button class="arrow left-arrow" onclick="previousImage()">⬅️</button>
-    <img id="popup-img" src="" alt="Car Image" onclick="toggleImageSize()">
-    <button class="arrow right-arrow" onclick="nextImage()">➡️</button>
-    <h2 id="popup-name"></h2>
-    <p><strong>Plate:</strong> <span id="popup-plate"></span></p>
-    <p><strong>Chasis:</strong> <span id="popup-chasis"></span></p>
-    <p><strong>Brand:</strong> <span id="popup-brand"></span></p>
-    <p><strong>Year:</strong> <span id="popup-year"></span></p>
-    <p><strong>Model:</strong> <span id="popup-model"></span></p>
-    <p><strong>Mile/KM:</strong> <span id="popup-km_mile"></span></p>
-    <p><strong>Accident Visual:</strong> <span id="popup-accident_visual"></span></p>
-    <p><strong>Accident Tramer:</strong> <span id="popup-accident_tramer"></span></p>
-    <p><strong>MSF:</strong> <span id="popup-msf"></span></p>
-    <p><strong>DSF:</strong> <span id="popup-dsf"></span></p>
-    <p><strong>GSF:</strong> <span id="popup-gsf"></span></p>
-    <p><strong>Package:</strong> <span id="popup-package"></span></p>
-    <p><strong>Color:</strong> <span id="popup-color"></span></p>
-    <p><strong>Engine:</strong> <span id="popup-engine"></span></p>
-    <p><strong>Gear:</strong> <span id="popup-gear"></span></p>
-    <p><strong>Fuel:</strong> <span id="popup-fuel"></span></p>
-    <p><strong>Expense Detail:</strong> <span id="popup-expense_detail"></span></p>
-    <p><strong>Current Total Expense:</strong> <span id="popup-current_total_expense"></span></p>
-    <p><strong>Created at: </strong> <span id="popup-created_at"></span></p>
-    <p><strong>Updated at: </strong> <span id="popup-updated_at"></span></p>
-    <p><strong>Created by: </strong> <span id="popup-created_by"></span></p>
-    <p><strong>Updated by: </strong> <span id="popup-updated_by"></span></p>
-    <button onclick="closePopup()">Close</button>
-</div>
-
+            <div class="popup" id="popup">
+            <button class="arrow left-arrow" onclick="previousImage()">⬅️</button>
+            <img id="popup-img" src="" alt="Car Image" onclick="toggleImageSize()">
+            <button class="arrow right-arrow" onclick="nextImage()">➡️</button>
+            <h2 id="popup-name"></h2>
+            <p><strong>Plate:</strong> <span id="popup-plate"></span></p>
+            <p><strong>Chasis:</strong> <span id="popup-chasis"></span></p>
+            <p><strong>Brand:</strong> <span id="popup-brand"></span></p>
+            <p><strong>Year:</strong> <span id="popup-year"></span></p>
+            <p><strong>Model:</strong> <span id="popup-model"></span></p>
+            <p><strong>Mile/KM:</strong> <span id="popup-km_mile"></span></p>
+            <p><strong>Accident Visual:</strong> <span id="popup-accident_visual"></span></p>
+            <p><strong>Accident Tramer:</strong> <span id="popup-accident_tramer"></span></p>
+            <p><strong>MSF:</strong> <span id="popup-msf"></span></p>
+            <p><strong>DSF:</strong> <span id="popup-dsf"></span></p>
+            <p><strong>GSF:</strong> <span id="popup-gsf"></span></p>
+            <p><strong>Package:</strong> <span id="popup-package"></span></p>
+            <p><strong>Color:</strong> <span id="popup-color"></span></p>
+            <p><strong>Engine:</strong> <span id="popup-engine"></span></p>
+            <p><strong>Gear:</strong> <span id="popup-gear"></span></p>
+            <p><strong>Fuel:</strong> <span id="popup-fuel"></span></p>
+            <p><strong>Expense Detail:</strong> <span id="popup-expense_detail"></span></p>
+            <p><strong>Current Total Expense:</strong> <span id="popup-current_total_expense"></span></p>
+                 <p><strong>Created at: </strong> <span id="popup-created_at"></span></p>
+            <p><strong>Updated at: </strong> <span id="popup-updated_at"></span></p>
+            <p><strong>Created by: </strong> <span id="popup-created_by"></span></p>
+            <p><strong>Updated by: </strong> <span id="popup-updated_by"></span></p>
+            <button onclick="closePopup()">Close</button>
+        </div>
 
 
     <footer>
@@ -581,39 +619,40 @@ td {
                    let imageIndex = 0;
                     let images = [];
 
-                    function showDetails(name, plate, chasis, brand, year, model, km_mile, accident_visual, accident_tramer, msf, dsf, gsf, package, color, engine, gear, fuel, expense_detail, current_total_expense, image, image2, image3, image4, created_at,updated_at,created_by,updated_by) {
-    images = [image, image2, image3, image4];
+                    function showDetails(name, plate,chasis, brand,year, model, km_mile, accident_visual, accident_tramer, msf, dsf,gsf, package, color, engine, gear, fuel, expense_detail, current_total_expense, image, image2,image3,image4,created_at,updated_at,created_by,updated_by) {
+                        images = [image, image2,image3,image4];
 
-    imageIndex = 0;
+                        imageIndex = 0;
 
-    document.getElementById('popup-name').textContent = name;
-    document.getElementById('popup-plate').textContent = plate;
-    document.getElementById('popup-chasis').textContent = chasis;
-    document.getElementById('popup-brand').textContent = brand;
-    document.getElementById('popup-year').textContent = year;
-    document.getElementById('popup-model').textContent = model;
-    document.getElementById('popup-km_mile').textContent = km_mile;
-    document.getElementById('popup-accident_visual').textContent = accident_visual;
-    document.getElementById('popup-accident_tramer').textContent = accident_tramer;
-    document.getElementById('popup-msf').textContent = msf;
-    document.getElementById('popup-dsf').textContent = dsf;
-    document.getElementById('popup-gsf').textContent = gsf;
-    document.getElementById('popup-package').textContent = package;
-    document.getElementById('popup-color').textContent = color;
-    document.getElementById('popup-engine').textContent = engine;
-    document.getElementById('popup-gear').textContent = gear;
-    document.getElementById('popup-fuel').textContent = fuel;
-    document.getElementById('popup-expense_detail').textContent = expense_detail;
-    document.getElementById('popup-current_total_expense').textContent = current_total_expense;
-    document.getElementById('popup-img').src = images[imageIndex];
-    document.getElementById('popup-created_at').textContent = created_at;
-    document.getElementById('popup-updated_at').textContent = updated_at;
-    document.getElementById('popup-created_by').textContent = created_by;
-    document.getElementById('popup-updated_by').textContent = updated_by;
-    document.getElementById('overlay').style.display = 'block';
-    document.getElementById('popup').style.display = 'block';
-}
+                        document.getElementById('popup-name').textContent = name;
+                        document.getElementById('popup-plate').textContent = plate;
+                        document.getElementById('popup-chasis').textContent = chasis;
+                        document.getElementById('popup-brand').textContent = brand;
+                        document.getElementById('popup-year').textContent = year;
+                        document.getElementById('popup-model').textContent = model;
+                        document.getElementById('popup-km_mile').textContent = km_mile;
+                        document.getElementById('popup-accident_visual').textContent = accident_visual;
+                        document.getElementById('popup-accident_tramer').textContent = accident_tramer;
+                        document.getElementById('popup-msf').textContent = msf;
+                        document.getElementById('popup-dsf').textContent = dsf;
+                        document.getElementById('popup-gsf').textContent = gsf;
+                        document.getElementById('popup-package').textContent = package;
+                        document.getElementById('popup-color').textContent = color;
+                        document.getElementById('popup-engine').textContent = engine;
+                        document.getElementById('popup-gear').textContent = gear;
+                        document.getElementById('popup-fuel').textContent = fuel;
+                        document.getElementById('popup-expense_detail').textContent = expense_detail;
+                        document.getElementById('popup-current_total_expense').textContent = current_total_expense;
+                        document.getElementById('popup-created_at').textContent = created_at;
+                        document.getElementById('popup-img').src = images[imageIndex];
+                            document.getElementById('popup-created_at').textContent = created_at;
+                            document.getElementById('popup-updated_at').textContent = updated_at;
+                            document.getElementById('popup-created_by').textContent = created_by;
+                            document.getElementById('popup-updated_by').textContent = updated_by;
 
+                        document.getElementById('overlay').style.display = 'block';
+                        document.getElementById('popup').style.display = 'block';
+                    }
 
                     function nextImage() {
                         imageIndex = (imageIndex + 1) % images.length;
