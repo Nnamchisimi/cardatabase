@@ -164,7 +164,7 @@ if (!$result) {
   table img {
       width: 200px;
   height: 130px;
-  object-fit: contain;
+  object-fit: fill;
   border-radius: 15px;
 }
 
@@ -238,6 +238,7 @@ td {
         background-color: #2196F3;
         color: white;
         border: none;
+    
     }
 
     .btn-secondary {
@@ -268,16 +269,29 @@ td {
     }
 
     .popup img {
-        width: 50%;
-        height:50%;
-        border-radius: 10px;
-        cursor: pointer;
-    }
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    max-height: 200px;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
     .popup p {
     font-size: 14px; /* Set font size for the paragraph text */
     line-height: 1; /* Improve readability */
     margin-bottom: 10px; /* Space between the paragraphs */
 }
+.popup-image-wrapper {
+    width: 100%;
+    height: 200px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
 
 
     .popup button {
@@ -352,6 +366,7 @@ td {
         background-color: #fff;
         border-radius: 5px;
     }
+    
 
     /* Active link style */
     nav a.active {
@@ -393,18 +408,15 @@ td {
         nav.responsive a {
             width: 100%;
         }
-    }
 
-    /* Responsive styles for mobile */
-    @media (max-width: 768px) {
         th, td {
-            padding: 10px;
-            font-size: 14px;
+            padding: 5px;
+            font-size: 7px;
         }
 
         .back-button {
             font-size: 1rem;
-            padding: 10px 18px;
+            padding: 2px 5px;
         }
 
         .form-group {
@@ -418,22 +430,22 @@ td {
 
         .arrow {
             position: absolute;
-            top: 50%;
+            top: 10%;
             background: #333;
             color: white;
             border: none;
-            padding: 12px;
+            padding: 5px;
             cursor: pointer;
-            border-radius: 50%;
+            border-radius: 20%;
             z-index: 10000;
         }
 
         .left-arrow {
-            left: 20px;
+            left: 5px;
         }
 
         .right-arrow {
-            right: 20px;
+            right: 5px;
         }
 
         .arrow:hover {
@@ -581,9 +593,11 @@ td {
     <div class="overlay" id="overlay" onclick="closePopup()"></div>
 
             <div class="popup" id="popup">
+            <div class="popup-image-wrapper">
             <button class="arrow left-arrow" onclick="previousImage()">⬅️</button>
             <img id="popup-img" src="" alt="Car Image" onclick="toggleImageSize()">
             <button class="arrow right-arrow" onclick="nextImage()">➡️</button>
+            </div>
             <h2 id="popup-name"></h2>
             <p><strong>Plate:</strong> <span id="popup-plate"></span></p>
             <p><strong>Chasis:</strong> <span id="popup-chasis"></span></p>
