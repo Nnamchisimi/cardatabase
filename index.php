@@ -78,9 +78,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $customer_name = $_POST['customer_name'];
     $plate = $_POST['plate'];
     $chasis = $_POST['chasis'];
-    $brand = $_POST['brand'];
+    if ($_POST['brand'] === 'other' && !empty($_POST['other_brand'])) {
+        $brand = trim($_POST['other_brand']); // Use the custom value
+    } else {
+        $brand = $_POST['brand']; // Use the selected value
+    }
+
     $year = $_POST['year'];
-    $model = $_POST['model'];
+
+    // Handle custom model
+    if ($_POST['model'] === 'other' && !empty($_POST['other_model'])) {
+        $model = trim($_POST['other_model']); // Use the custom model value
+    } else {
+        $model = $_POST['model']; // Use the selected model
+    }
+
+
     $km_mile = $_POST['km_mile'];
     $accident_visual = $_POST['accident_visual'];
     $accident_tramer = $_POST['accident_tramer'];
@@ -181,7 +194,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             echo "Error: " . $conn->error;
         }
     }
+
+
 }
+
+
 
 $conn->close();
 ?>
@@ -327,27 +344,41 @@ $conn->close();
     });
 </script>
 
+<div class="form-group">
+    <label for="brand">Marka | Brand:</label>
+    <?php
+    $brands = ["Acura", "Alfa Romeo", "Audi", "BMW", "Chevrolet", "Chrysler", "Citroen", "Dodge", "Fiat", "Ford", "Honda", "Hyundai", "Infiniti", "Jaguar", "Kia", "Lexus", "Maybach", "Mazda", "Mercedes-Benz", "Nissan", "Peugeot", "Renault", "Subaru", "Toyota", "Volkswagen"];
+    $isCustomBrand = !in_array($brand, $brands);
+    ?>
+    <select id="brand" name="brand" onchange="checkOtherBrand(); updateModels();">
+        <option value="" disabled <?= empty($brand) ? 'selected' : '' ?>>Select</option>
+        <?php foreach ($brands as $b): ?>
+            <option value="<?= $b ?>" <?= ($brand === $b) ? 'selected' : '' ?>><?= $b ?></option>
+        <?php endforeach; ?>
+        <option value="other" <?= $isCustomBrand ? 'selected' : '' ?>>Other</option>
+    </select>
 
-        <div class="form-group">
-            <label for="brand">Marka | Brand:</label>
-            <select id="brand" name="brand" onchange="updateModels()">
-                <option value="" disabled <?php echo empty($brand) ? 'selected' : ''; ?>>Select</option>
-                <?php
-                   $brands = ["Acura", "Alfa Romeo", "Audi", "BMW", "Chevrolet", "Chrysler", "Citroen", "Dodge", "Fiat", "Ford", "Honda", "Hyundai", "Infiniti", "Jaguar", "Kia", "Lexus","Maybach", "Mazda", "Mercedes-Benz", "Nissan", "Peugeot", "Renault", "Subaru", "Toyota", "Volkswagen"];
-                foreach ($brands as $brandOption) {
-                    $selected = ($brand == $brandOption) ? 'selected' : '';
-                    echo "<option value='$brandOption' $selected>$brandOption</option>";
-                }
-                ?>
-            </select>
-        </div>
+    <input type="text" name="other_brand" id="otherBrandInput" placeholder="Enter brand..." 
+           value="<?= $isCustomBrand ? htmlspecialchars($brand) : '' ?>" 
+           style="<?= $isCustomBrand ? 'display:block;' : 'display:none;' ?>">
+</div>
 
-        <div class="form-group">
-            <label for="model">Modeli | Model:</label>
-            <select id="model" name="model"  >
-                <option value="" disabled <?php echo empty($model) ? 'selected' : ''; ?>>Select</option>
-            </select>
-        </div>
+<div class="form-group">
+    <label for="model">Modeli | Model:</label>
+    <?php
+    // Check if model is custom (i.e., the value is "other")
+    $isCustomModel = !empty($model) && $model === 'other';
+    ?>
+    <select id="model" name="model" onchange="checkOtherModel();">
+        <option value="" disabled <?= empty($model) ? 'selected' : '' ?>>Select</option>
+        <option value="other" <?= $model === 'other' ? 'selected' : '' ?>>Other</option>
+    </select>
+
+    <input type="text" name="other_model" id="otherModelInput" placeholder="Enter model..." 
+           value="<?= $isCustomModel ? htmlspecialchars($model) : '' ?>" 
+           style="<?= $isCustomModel ? 'display:block;' : 'display:none;' ?>">
+</div>
+
 
         <!-- Motor | Engine -->
         <div class="form-group">
@@ -845,38 +876,85 @@ document.getElementById("currency_selector3").addEventListener("change", update_
 
 
 
+function updateModels() {
+    const brandDropdown = document.getElementById("brand");
+    const modelDropdown = document.getElementById("model");
 
+    const selectedModel = "<?php echo isset($model) ? $model : ''; ?>"; // Get the selected model from PHP
+    const selectedBrand = brandDropdown.value;
 
-            function updateModels() {
-            const brandDropdown = document.getElementById("brand");
-            const modelDropdown = document.getElementById("model");
+    // Clear existing options
+    modelDropdown.innerHTML = '';
 
-            // Always add the "Select" option at the top
-            modelDropdown.innerHTML = '<option value="" disabled selected>Select</option>';
+    // Add "Select" option
+    const selectOption = document.createElement("option");
+    selectOption.value = "";
+    selectOption.disabled = true;
+    selectOption.textContent = "Select";
+    if (!selectedModel || selectedModel === "") selectOption.selected = true;
+    modelDropdown.appendChild(selectOption);
 
-            const selectedBrand = brandDropdown.value; // Get selected brand
-            const selectedModel = "<?php echo $model; ?>"; // Get model from PHP
-
+    // Add models based on selected brand
     if (selectedBrand && carModels[selectedBrand]) {
-        // Loop through and add models based on selected brand
         carModels[selectedBrand].forEach(model => {
             const option = document.createElement("option");
             option.value = model;
             option.textContent = model;
-
-            // Automatically select the model from the database
             if (model === selectedModel) {
                 option.selected = true;
             }
-
             modelDropdown.appendChild(option);
         });
     }
+
+    // Always add "Other" option
+    const otherOption = document.createElement("option");
+    otherOption.value = "other";
+    otherOption.textContent = "Other";
+    if (selectedModel === "other") {
+        otherOption.selected = true;
+    }
+    modelDropdown.appendChild(otherOption);
+
+    // Show/hide custom model input
+    checkOtherModel();
 }
 
-    window.onload = updateModels;
-    
+function checkOtherBrand() {
+    const brandDropdown = document.getElementById("brand");
+    const otherBrandInput = document.getElementById("otherBrandInput");
 
+    if (brandDropdown.value === "other") {
+        otherBrandInput.style.display = "block";
+    } else {
+        otherBrandInput.style.display = "none";
+    }
+}
+
+function checkOtherModel() {
+    const modelSelect = document.getElementById('model');
+    const otherModelInput = document.getElementById('otherModelInput');
+
+    // If "Other" is selected, show the input field
+    if (modelSelect.value === 'other') {
+        otherModelInput.style.display = "block";
+    } else {
+        otherModelInput.style.display = "none";
+    }
+
+    // If "Other" was already selected, make sure the input field is populated
+    if (modelSelect.value === 'other') {
+        otherModelInput.value = "<?php echo isset($model) && $model === 'other' ? htmlspecialchars($model) : ''; ?>";
+        
+    }
+}
+
+// Ensure that the correct options and inputs are shown on page load
+window.onload = function() {
+    updateModels();         // Load models based on selected brand
+    checkOtherBrand();      // Show/hide brand input based on "Other"
+    checkOtherModel();      // Show/hide model input based on "Other"
+};
        // Place the Confirmation Popup Here 👇👇👇
        document.querySelector("form").onsubmit = function (event) {
         const confirmation = confirm("Are you sure you want to submit the data?");
