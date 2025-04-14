@@ -348,7 +348,8 @@ $conn->close();
     <label for="brand">Marka | Brand:</label>
     <?php
     $brands = ["Acura", "Alfa Romeo", "Audi", "BMW", "Chevrolet", "Chrysler", "Citroen", "Dodge", "Fiat", "Ford", "Honda", "Hyundai", "Infiniti", "Jaguar", "Kia", "Lexus", "Maybach", "Mazda", "Mercedes-Benz", "Nissan", "Peugeot", "Renault", "Subaru", "Toyota", "Volkswagen"];
-    $isCustomBrand = !in_array($brand, $brands);
+    $isBrandInList = in_array($brand, $brands);
+    $isCustomBrand = !$isBrandInList && !empty($brand);
     ?>
     <select id="brand" name="brand" onchange="checkOtherBrand(); updateModels();">
         <option value="" disabled <?= empty($brand) ? 'selected' : '' ?>>Select</option>
@@ -944,10 +945,19 @@ function checkOtherModel() {
 
     // If "Other" was already selected, make sure the input field is populated
     if (modelSelect.value === 'other') {
-        otherModelInput.value = "<?php echo isset($model) && $model === 'other' ? htmlspecialchars($model) : ''; ?>";
+      otherModelInput.value = "<?php
+    if (isset($model) && !in_array($model, $carModels[$brand] ?? [])) {
+        echo htmlspecialchars($model);
+    } else {
+        echo '';
+    }
+?>";
+
         
     }
 }
+
+
 
 // Ensure that the correct options and inputs are shown on page load
 window.onload = function() {
