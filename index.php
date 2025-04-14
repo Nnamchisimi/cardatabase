@@ -571,7 +571,7 @@ $conn->close();
         <!-- File Upload -->
 <!-- Car Image 1 -->
 <div class="form-group">
-    <label for="image">Car Image:</label>
+    <label for="image">Car Image (Front View):</label>
     <input 
         type="file" 
         id="image" 
@@ -589,7 +589,7 @@ $conn->close();
 
 <!-- Car Image 2 -->
 <div class="form-group">
-    <label for="image2">Car Image2:</label>
+    <label for="image2">Car Image2 (Side View-Left):</label>
     <input 
         type="file" 
         id="image2" 
@@ -607,7 +607,7 @@ $conn->close();
 
 <!-- Car Image 3 -->
 <div class="form-group">
-    <label for="image3">Car Image3:</label>
+    <label for="image3">Car Image3 (Side View-Right):</label>
     <input 
         type="file" 
         id="image3" 
@@ -625,7 +625,7 @@ $conn->close();
 
 <!-- Car Image 4 -->
 <div class="form-group">
-    <label for="image4">Car Image4:</label>
+    <label for="image4">Car Image4 (Rear View):</label>
     <input 
         type="file" 
         id="image4" 
