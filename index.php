@@ -589,7 +589,7 @@ $conn->close();
 
 <!-- Car Image 2 -->
 <div class="form-group">
-    <label for="image2">Car Image2 (Side View-Left):</label>
+    <label for="image2">Car Image2:</label>
     <input 
         type="file" 
         id="image2" 
@@ -607,7 +607,7 @@ $conn->close();
 
 <!-- Car Image 3 -->
 <div class="form-group">
-    <label for="image3">Car Image3 (Side View-Right):</label>
+    <label for="image3">Car Image3:</label>
     <input 
         type="file" 
         id="image3" 
