@@ -896,23 +896,29 @@ function updateModels() {
     modelDropdown.appendChild(selectOption);
 
     // Add models based on selected brand
+    let modelFound = false;  // To track if the selected model exists in the brand list
     if (selectedBrand && carModels[selectedBrand]) {
         carModels[selectedBrand].forEach(model => {
             const option = document.createElement("option");
             option.value = model;
             option.textContent = model;
+
+            // If this model is selected, mark it
             if (model === selectedModel) {
                 option.selected = true;
+                modelFound = true;  // Mark that we found the model
             }
+
             modelDropdown.appendChild(option);
         });
     }
 
-    // Always add "Other" option
+    // Always add "Other" option, and select it if no valid model found
     const otherOption = document.createElement("option");
     otherOption.value = "other";
     otherOption.textContent = "Other";
-    if (selectedModel === "other") {
+    if (!modelFound && selectedModel) {
+        // If selected model doesn't match any brand models, mark "Other" as selected
         otherOption.selected = true;
     }
     modelDropdown.appendChild(otherOption);
@@ -946,16 +952,15 @@ function checkOtherModel() {
     // If "Other" was already selected, make sure the input field is populated
     if (modelSelect.value === 'other') {
       otherModelInput.value = "<?php
-    if (isset($model) && !in_array($model, $carModels[$brand] ?? [])) {
-        echo htmlspecialchars($model);
-    } else {
-        echo '';
-    }
-?>";
-
-        
+        if (isset($model) && !in_array($model, $carModels[$brand] ?? [])) {
+            echo htmlspecialchars($model);
+        } else {
+            echo '';
+        }
+      ?>";
     }
 }
+
 
 
 
