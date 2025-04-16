@@ -23,11 +23,18 @@ $brand_filter = '';
 // Check if the search query is set in the URL
 if (isset($_GET['search'])) {
     $search_query = mysqli_real_escape_string($conn, $_GET['search']);  // sanitize input
+
     // Remove spaces and hyphens from the search query
-    $search_query_cleaned = str_replace([' ', '-'], '', $search_query);
+    $search_query_cleaned = str_replace([' ', '-', ''], '', $search_query);
+
+    // Also remove any non-breaking spaces or special characters (like UTF-8 spaces)
+    $search_query_cleaned = trim(preg_replace('/\s+/', '', $search_query_cleaned)); // Normalize spaces
 
     // Split the search query into individual terms
     $search_terms = explode(' ', $search_query);
+
+    // Build a normalized plate match clause (ignores spaces and is case-insensitive)
+    $normalized_plate_match = "LOWER(REPLACE(plate, ' ', '')) LIKE LOWER('%$search_query_cleaned%')";
 
     // Determine filters based on the number of search terms
     if (count($search_terms) == 1) {
@@ -35,17 +42,18 @@ if (isset($_GET['search'])) {
         $search_term = $search_terms[0];
         $sql = "SELECT * FROM cars WHERE 
                 (brand LIKE '%$search_term%' OR 
-                 plate LIKE '%$search_term%' OR 
-                customer_name LIKE '%$search_term%' OR 
-                chasis LIKE '%$search_term%' OR 
-                model LIKE '%$search_term%' OR 
-                year LIKE '%$search_term%')";
+                 $normalized_plate_match OR 
+                 customer_name LIKE '%$search_term%' OR 
+                 chasis LIKE '%$search_term%' OR 
+                 model LIKE '%$search_term%' OR 
+                 year LIKE '%$search_term%')";
     } elseif (count($search_terms) == 2) {
         // Two terms: handle brand + model, brand + year, or model + year
         $term1 = $search_terms[0];
         $term2 = $search_terms[1];
-        
+
         $sql = "SELECT * FROM cars WHERE 
+                ($normalized_plate_match) OR
                 (brand LIKE '%$term1%' AND model LIKE '%$term2%') OR
                 (brand LIKE '%$term2%' AND model LIKE '%$term1%') OR
                 (brand LIKE '%$term1%' AND year LIKE '%$term2%') OR
@@ -59,24 +67,28 @@ if (isset($_GET['search'])) {
         $term3 = $search_terms[2];
 
         $sql = "SELECT * FROM cars WHERE 
+                ($normalized_plate_match) OR
                 (brand LIKE '%$term1%' AND model LIKE '%$term2%' AND year LIKE '%$term3%') OR
                 (brand LIKE '%$term1%' AND model LIKE '%$term3%' AND year LIKE '%$term2%') OR
                 (brand LIKE '%$term2%' AND model LIKE '%$term1%' AND year LIKE '%$term3%') OR
                 (brand LIKE '%$term2%' AND model LIKE '%$term3%' AND year LIKE '%$term1%') OR
                 (brand LIKE '%$term3%' AND model LIKE '%$term1%' AND year LIKE '%$term2%') OR
                 (brand LIKE '%$term3%' AND model LIKE '%$term2%' AND year LIKE '%$term1%')";
+    } else {
+        // Fallback for 4+ terms — try broad match on all fields
+        $like_clauses = [];
+        foreach ($search_terms as $term) {
+            $like_clauses[] = "(brand LIKE '%$term%' OR model LIKE '%$term%' OR year LIKE '%$term%' OR customer_name LIKE '%$term%' OR chasis LIKE '%$term%' OR plate LIKE '%$term%')";
+        }
+        $like_clause_string = implode(' AND ', $like_clauses);
+        
+        $sql = "SELECT * FROM cars WHERE ($normalized_plate_match) OR ($like_clause_string)";
     }
-} else {
-    $sql = "SELECT * FROM cars";
+
+    // Now execute the query safely
+    $result = $conn->query($sql);
 }
 
-// Execute the query
-$result = $conn->query($sql);
-
-// Check if the query executed successfully
-if (!$result) {
-    die("Error in query execution: " . $conn->error);
-}
 ?>
 
 
@@ -282,6 +294,13 @@ td {
     line-height: 1; /* Improve readability */
     margin-bottom: 10px; /* Space between the paragraphs */
 }
+.popup input[type="checkbox"] {
+    width: 8px;  /* Set the width of the checkbox */
+    height: 8px; /* Set the height of the checkbox */
+    transform: scale(1.5); /* Scale up the checkbox (optional, adjust value to your liking) */
+    margin-right: 1px; /* Optional: space between checkbox and label text */
+}
+
 .popup-image-wrapper {
     width: 100%;
     height: 200px;
@@ -295,7 +314,7 @@ td {
 
 
     .popup button {
-        margin-top: 20px;
+        margin-top: 4px;
         padding: 12px 24px;
         background: #333;
         color: white;
@@ -374,6 +393,8 @@ td {
         color: #fff;
         font-weight: 700;
     }
+
+    
 
     /* Responsive Design for Mobile */
     @media (max-width: 768px) {
@@ -526,6 +547,7 @@ td {
                 </thead>
                 <tbody>
                     <?php
+                    
                     while($row = $result->fetch_assoc()) {
                         // Check if an image is uploaded for the car
                         $image_path = $row['image'] ? 'uploads/' . $row['image'] : 'uploads/default.jpg'; // Default image if none is uploaded
@@ -592,38 +614,45 @@ td {
 
     <div class="overlay" id="overlay" onclick="closePopup()"></div>
 
-            <div class="popup" id="popup">
-            <div class="popup-image-wrapper">
-            <button class="arrow left-arrow" onclick="previousImage()">⬅️</button>
-            <img id="popup-img" src="" alt="Car Image" onclick="toggleImageSize()">
-            <button class="arrow right-arrow" onclick="nextImage()">➡️</button>
-            </div>
-            <h2 id="popup-name"></h2>
-            <p><strong>Plate:</strong> <span id="popup-plate"></span></p>
-            <p><strong>Chasis:</strong> <span id="popup-chasis"></span></p>
-            <p><strong>Brand:</strong> <span id="popup-brand"></span></p>
-            <p><strong>Year:</strong> <span id="popup-year"></span></p>
-            <p><strong>Model:</strong> <span id="popup-model"></span></p>
-            <p><strong>Mile/KM:</strong> <span id="popup-km_mile"></span></p>
-            <p><strong>Accident Visual:</strong> <span id="popup-accident_visual"></span></p>
-            <p><strong>Accident Tramer:</strong> <span id="popup-accident_tramer"></span></p>
-            <p><strong>MSF:</strong> <span id="popup-msf"></span></p>
-            <p><strong>DSF:</strong> <span id="popup-dsf"></span></p>
-            <p><strong>GSF:</strong> <span id="popup-gsf"></span></p>
-            <p><strong>Package:</strong> <span id="popup-package"></span></p>
-            <p><strong>Color:</strong> <span id="popup-color"></span></p>
-            <p><strong>Engine:</strong> <span id="popup-engine"></span></p>
-            <p><strong>Gear:</strong> <span id="popup-gear"></span></p>
-            <p><strong>Fuel:</strong> <span id="popup-fuel"></span></p>
-            <p><strong>Expense Detail:</strong> <span id="popup-expense_detail"></span></p>
-            <p><strong>Current Total Expense:</strong> <span id="popup-current_total_expense"></span></p>
-                 <p><strong>Created at: </strong> <span id="popup-created_at"></span></p>
-            <p><strong>Updated at: </strong> <span id="popup-updated_at"></span></p>
-            <p><strong>Created by: </strong> <span id="popup-created_by"></span></p>
-            <p><strong>Updated by: </strong> <span id="popup-updated_by"></span></p>
-            <button onclick="closePopup()">Close</button>
-        </div>
+    <div class="popup" id="popup">
+    <div class="popup-image-wrapper" style="position: relative;">
+        <!-- Print Button (🖨️) -->
+        <button onclick="printPopup()" title="Print" style="position: absolute; top: 10px; right: 10px; background: none; border: none; cursor: pointer;">
+            🖨️
+        </button>
+        <!-- Image Navigation -->
+        <button class="arrow left-arrow" onclick="previousImage()">⬅️</button>
+        <img id="popup-img" src="" alt="Car Image" onclick="toggleImageSize()">
+        <button class="arrow right-arrow" onclick="nextImage()">➡️</button>
+    </div>
 
+     <h2 id="popup-name"></h2>
+    <!-- Each Detail with Checkboxes -->
+    <p><label><input type="checkbox" class="print-checkbox" unchecked> <strong>Plate:</strong></label> <span id="popup-plate"></span></p>
+    <p><label><input type="checkbox" class="print-checkbox" unchecked> <strong>Chasis:</strong></label> <span id="popup-chasis"></span></p>
+    <p><label><input type="checkbox" class="print-checkbox" unchecked> <strong>Brand:</strong></label> <span id="popup-brand"></span></p>
+    <p><label><input type="checkbox" class="print-checkbox" unchecked> <strong>Year:</strong></label> <span id="popup-year"></span></p>
+    <p><label><input type="checkbox" class="print-checkbox" unchecked> <strong>Model:</strong></label> <span id="popup-model"></span></p>
+    <p><label><input type="checkbox" class="print-checkbox" unchecked> <strong>Mile/KM:</strong></label> <span id="popup-km_mile"></span></p>
+    <p><label><input type="checkbox" class="print-checkbox" unchecked> <strong>Accident Visual:</strong></label> <span id="popup-accident_visual"></span></p>
+    <p><label><input type="checkbox" class="print-checkbox" unchecked> <strong>Accident Tramer:</strong></label> <span id="popup-accident_tramer"></span></p>
+    <p><label><input type="checkbox" class="print-checkbox" unchecked> <strong>MSF:</strong></label> <span id="popup-msf"></span></p>
+    <p><label><input type="checkbox" class="print-checkbox" unchecked> <strong>DSF:</strong></label> <span id="popup-dsf"></span></p>
+    <p><label><input type="checkbox" class="print-checkbox" unchecked> <strong>GSF:</strong></label> <span id="popup-gsf"></span></p>
+    <p><label><input type="checkbox" class="print-checkbox" unchecked> <strong>Package:</strong></label> <span id="popup-package"></span></p>
+    <p><label><input type="checkbox" class="print-checkbox" unchecked> <strong>Color:</strong></label> <span id="popup-color"></span></p>
+    <p><label><input type="checkbox" class="print-checkbox" unchecked> <strong>Engine:</strong></label> <span id="popup-engine"></span></p>
+    <p><label><input type="checkbox" class="print-checkbox" unchecked> <strong>Gear:</strong></label> <span id="popup-gear"></span></p>
+    <p><label><input type="checkbox" class="print-checkbox" unchecked> <strong>Fuel:</strong></label> <span id="popup-fuel"></span></p>
+    <p><label><input type="checkbox" class="print-checkbox" unchecked> <strong>Expense Detail:</strong></label> <span id="popup-expense_detail"></span></p>
+    <p><label><input type="checkbox" class="print-checkbox" unchecked> <strong>Current Total Expense:</strong></label> <span id="popup-current_total_expense"></span></p>
+    <p><label><input type="checkbox" class="print-checkbox" unchecked> <strong>Created at:</strong></label> <span id="popup-created_at"></span></p>
+    <p><label><input type="checkbox" class="print-checkbox" unchecked> <strong>Updated at:</strong></label> <span id="popup-updated_at"></span></p>
+    <p><label><input type="checkbox" class="print-checkbox" unchecked> <strong>Created by:</strong></label> <span id="popup-created_by"></span></p>
+    <p><label><input type="checkbox" class="print-checkbox" unchecked> <strong>Updated by:</strong></label> <span id="popup-updated_by"></span></p>
+    <button onclick="closePopup()">Close</button>
+
+</div>
 
     <footer>
         <p>&copy; 2025 Serhan Kombos Otomotiv</p>
@@ -692,6 +721,63 @@ td {
                 img.style.width = '50%'; // Default size
             }
         }
+
+        function printPopup() {
+    const popup = document.getElementById("popup");
+
+    // Clone the popup so we don't modify the actual DOM
+    const clone = popup.cloneNode(true);
+
+    // Remove all unchecked detail lines
+    const checkboxes = clone.querySelectorAll(".print-checkbox");
+    checkboxes.forEach(checkbox => {
+        if (!checkbox.checked) {
+            checkbox.closest("p")?.remove();
+        } else {
+            checkbox.style.display = "none"; // hide checkbox in print
+        }
+    });
+
+    // Remove buttons/arrows from the print view
+    clone.querySelectorAll(".arrow, button").forEach(el => el.style.display = "none");
+
+    const popupImg = document.getElementById("popup-img");
+    const imgWidth = popupImg.clientWidth;
+    const imgHeight = popupImg.clientHeight;
+
+    const printWindow = window.open('', '', 'width=800,height=600');
+    printWindow.document.write(`
+        <html>
+        <head>
+            <title>Print Popup</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    padding: 5px;
+                }
+                h2 {
+                    margin-top: 0;
+                }
+                img {
+                    width: ${imgWidth}px;
+                    height: ${imgHeight}px;
+                    object-fit: contain;
+                }
+            </style>
+        </head>
+        <body>
+            ${clone.innerHTML}
+        </body>
+        </html>
+    `);
+
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+    printWindow.close();
+}
+
+
     </script>
     
 </body>

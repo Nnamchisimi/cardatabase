@@ -52,6 +52,7 @@ if (isset($_GET['edit_id'])) {
         $current_expense = $row['current_total_expense'];
         $image = $row['image'];
         $image2 = $row['image2'];
+        
         $image3 = $row['image3'];
         $image4 = $row['image4'];
         
@@ -142,6 +143,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $image3 = $row['image3'];
     }
 
+
     // Handle file upload for fourth image
     if (isset($_FILES['image4']) && $_FILES['image4']['error'] == 0) {
         $image4 = $_FILES['image4']['name'];
@@ -226,14 +228,7 @@ $conn->close();
         <!-- Plaka | Plate -->
 <div class="form-group">
     <label for="plate">Plaka | Plate:</label>
-    <input 
-        type="text" 
-        id="plate" 
-        name="plate" 
-        value="<?php echo isset($plate) ? htmlspecialchars($plate) : ''; ?>" 
-        required 
-        placeholder="VV 700" 
-    />
+    <input type="text" id="plate" name="plate" value="<?php echo isset($plate) ? htmlspecialchars($plate) : ''; ?>" required placeholder="VV 700" />
     <small id="plateError" style="color: red; display: none;">Please enter the plate in the format "XX 000" (two letters and three digits).</small>
 </div>
 
@@ -496,7 +491,8 @@ $conn->close();
         <!-- Aktuel Masraf Toplami | Current Total Expense -->
         <div class="form-group">
             <label for="current_expense">Aktuel Masraf Toplami | Current Total Expense:</label>
-            <input type="number" id="current_expense" name="current_expense" value="<?php echo isset($current_expense) ? htmlspecialchars($current_expense) : ''; ?>" required />
+            <input type="text" id="current_expense" name="current_expense" placeholder= "Eg 5000.00 STG" value="<?php echo isset($current_expense) ? htmlspecialchars($current_expense) : ''; ?>" />
+            <small id="currentError" style="color: red; display: none;">Please enter Value in the format "000.00 XXX" (digits and currency).</small>
         </div>
         <?php
                 // Initialize the variables $msf and $dsf with some default value
@@ -576,7 +572,7 @@ $conn->close();
         type="file" 
         id="image" 
         name="image" 
-        <?php echo isset($_GET['edit_id']) ? '' : 'required'; ?> 
+        <?php echo isset($_GET['edit_id']) ? '' : ''; ?> 
         onchange="checkImageOrientation(this, 'image-warning')" 
     />
     <?php
@@ -594,7 +590,7 @@ $conn->close();
         type="file" 
         id="image2" 
         name="image2" 
-        <?php echo isset($_GET['edit_id']) ? '' : 'required'; ?> 
+        <?php echo isset($_GET['edit_id']) ? '' : ''; ?> 
         onchange="checkImageOrientation(this, 'image2-warning')" 
     />
     <?php
@@ -612,7 +608,7 @@ $conn->close();
         type="file" 
         id="image3" 
         name="image3" 
-        <?php echo isset($_GET['edit_id']) ? '' : 'required'; ?> 
+        <?php echo isset($_GET['edit_id']) ? '' : ''; ?> 
         onchange="checkImageOrientation(this, 'image3-warning')" 
     />
     <?php
@@ -630,7 +626,7 @@ $conn->close();
         type="file" 
         id="image4" 
         name="image4" 
-        <?php echo isset($_GET['edit_id']) ? '' : 'required'; ?> 
+        <?php echo isset($_GET['edit_id']) ? '' : ''; ?> 
         onchange="checkImageOrientation(this, 'image4-warning')" 
     />
     <?php
@@ -853,6 +849,20 @@ window.onload = function() {
             document.getElementById("plateError").style.display = "none"; // Hide error message
         }
     });
+
+
+    document.querySelector("form").addEventListener("submit", function(event) {
+    const expenseInput = document.getElementById("current_expense");
+    const expense = expenseInput.value.trim();
+    const expensePattern = /^\d+([.,]\d{2})?\s[A-Z]{3}$/;
+
+    if (expense !== "" && !expensePattern.test(expense)) {
+        document.getElementById("currentError").style.display = "inline";
+        event.preventDefault();
+    } else {
+        document.getElementById("currentError").style.display = "none";
+    }
+});
 
                 
            function update_km_mile() {
