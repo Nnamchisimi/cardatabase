@@ -1,6 +1,7 @@
 <?php
 include('db_connection.php');
 session_start();
+
 // Check if the user is logged in
 if (!isset($_SESSION['user_id'])) {
     // If the user is not logged in, display the message and a button to go back to login
@@ -12,82 +13,58 @@ if (!isset($_SESSION['user_id'])) {
     </div>';
     exit;  // Stop the script from executing further
 }
-
-// Initialize variables
 $search_query = '';
 $search_terms = [];
 $year_filter = '';
 $model_filter = '';
 $brand_filter = '';
 
-// Check if the search query is set in the URL
-if (isset($_GET['search'])) {
+// Default SQL query to fetch all cars
+$sql = "SELECT * FROM cars";
+
+// Check if the search query is set and not empty
+if (isset($_GET['search']) && !empty($_GET['search'])) {
     $search_query = mysqli_real_escape_string($conn, $_GET['search']);  // sanitize input
 
-    // Remove spaces and hyphens from the search query
-    $search_query_cleaned = str_replace([' ', '-', ''], '', $search_query);
+    // Normalize: remove hyphens, spaces, tabs, and trim
+    $search_query_cleaned = strtolower(str_replace([' ', '-', "\t", "\n", "\r"], '', $search_query));
+    $search_terms = preg_split('/[\s\-]+/', strtolower(trim($search_query)));
 
-    // Also remove any non-breaking spaces or special characters (like UTF-8 spaces)
-    $search_query_cleaned = trim(preg_replace('/\s+/', '', $search_query_cleaned)); // Normalize spaces
+    // Fully normalized fields (no spaces, no hyphens, lowercase)
+    $normalized_columns = [
+        "LOWER(REPLACE(REPLACE(brand, ' ', ''), '-', ''))",
+        "LOWER(REPLACE(REPLACE(model, ' ', ''), '-', ''))",
+        "LOWER(REPLACE(REPLACE(year, ' ', ''), '-', ''))",
+        "LOWER(REPLACE(REPLACE(customer_name, ' ', ''), '-', ''))",
+        "LOWER(REPLACE(REPLACE(chasis, ' ', ''), '-', ''))",
+        "LOWER(REPLACE(REPLACE(plate, ' ', ''), '-', ''))"
+    ];
 
-    // Split the search query into individual terms
-    $search_terms = explode(' ', $search_query);
-
-    // Build a normalized plate match clause (ignores spaces and is case-insensitive)
-    $normalized_plate_match = "LOWER(REPLACE(plate, ' ', '')) LIKE LOWER('%$search_query_cleaned%')";
-
-    // Determine filters based on the number of search terms
-    if (count($search_terms) == 1) {
-        // One term can be a brand, model, or year
-        $search_term = $search_terms[0];
-        $sql = "SELECT * FROM cars WHERE 
-                (brand LIKE '%$search_term%' OR 
-                 $normalized_plate_match OR 
-                 customer_name LIKE '%$search_term%' OR 
-                 chasis LIKE '%$search_term%' OR 
-                 model LIKE '%$search_term%' OR 
-                 year LIKE '%$search_term%')";
-    } elseif (count($search_terms) == 2) {
-        // Two terms: handle brand + model, brand + year, or model + year
-        $term1 = $search_terms[0];
-        $term2 = $search_terms[1];
-
-        $sql = "SELECT * FROM cars WHERE 
-                ($normalized_plate_match) OR
-                (brand LIKE '%$term1%' AND model LIKE '%$term2%') OR
-                (brand LIKE '%$term2%' AND model LIKE '%$term1%') OR
-                (brand LIKE '%$term1%' AND year LIKE '%$term2%') OR
-                (brand LIKE '%$term2%' AND year LIKE '%$term1%') OR
-                (model LIKE '%$term1%' AND year LIKE '%$term2%') OR
-                (model LIKE '%$term2%' AND year LIKE '%$term1%')";
-    } elseif (count($search_terms) == 3) {
-        // Three terms: brand + model + year, any order
-        $term1 = $search_terms[0];
-        $term2 = $search_terms[1];
-        $term3 = $search_terms[2];
-
-        $sql = "SELECT * FROM cars WHERE 
-                ($normalized_plate_match) OR
-                (brand LIKE '%$term1%' AND model LIKE '%$term2%' AND year LIKE '%$term3%') OR
-                (brand LIKE '%$term1%' AND model LIKE '%$term3%' AND year LIKE '%$term2%') OR
-                (brand LIKE '%$term2%' AND model LIKE '%$term1%' AND year LIKE '%$term3%') OR
-                (brand LIKE '%$term2%' AND model LIKE '%$term3%' AND year LIKE '%$term1%') OR
-                (brand LIKE '%$term3%' AND model LIKE '%$term1%' AND year LIKE '%$term2%') OR
-                (brand LIKE '%$term3%' AND model LIKE '%$term2%' AND year LIKE '%$term1%')";
-    } else {
-        // Fallback for 4+ terms — try broad match on all fields
-        $like_clauses = [];
-        foreach ($search_terms as $term) {
-            $like_clauses[] = "(brand LIKE '%$term%' OR model LIKE '%$term%' OR year LIKE '%$term%' OR customer_name LIKE '%$term%' OR chasis LIKE '%$term%' OR plate LIKE '%$term%')";
-        }
-        $like_clause_string = implode(' AND ', $like_clauses);
-        
-        $sql = "SELECT * FROM cars WHERE ($normalized_plate_match) OR ($like_clause_string)";
+    // Create OR conditions for full cleaned input
+    $normalized_whole_match = [];
+    foreach ($normalized_columns as $col) {
+        $normalized_whole_match[] = "$col LIKE '%$search_query_cleaned%'";
     }
 
-    // Now execute the query safely
-    $result = $conn->query($sql);
+    // Create AND conditions for each individual search term
+    $normalized_term_clauses = [];
+    foreach ($search_terms as $term) {
+        $term_clauses = [];
+        foreach ($normalized_columns as $col) {
+            $term_clauses[] = "$col LIKE '%$term%'";
+        }
+        $normalized_term_clauses[] = '(' . implode(' OR ', $term_clauses) . ')';
+    }
+
+    // Override SQL with search-specific query
+    $sql = "SELECT * FROM cars WHERE (" . implode(' OR ', $normalized_whole_match) . ") OR (" . implode(' AND ', $normalized_term_clauses) . ")";
 }
+
+// ✅ Now execute the final SQL (default or overridden)
+$result = $conn->query($sql);
+
+
+
 
 ?>
 
