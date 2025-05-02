@@ -149,6 +149,25 @@ $result = $conn->query($sql);
         max-height: 540px;
         overflow-y: auto;
     }
+    /* Add custom scroll bars inside table cells */
+td {
+    max-height: 100px; /* Ensure a fixed height for the cells */
+    overflow-y: auto; /* Scroll vertically inside the cell */
+}
+
+/* Optional: Make text inside table cells scroll horizontally if it overflows */
+td {
+    white-space: nowrap; /* Prevent wrapping of long text */
+    text-overflow: ellipsis; /* Show ellipses for overflowed text */
+}
+.cell-content {
+    max-height: 100px;         /* Keeps cell height fixed */
+    overflow-y: auto;          /* Enables vertical scroll inside */
+    overflow-x: hidden;        /* Prevents horizontal scroll */
+    white-space: normal;       /* Allows text to wrap */
+    padding-right: 8px;
+}
+
     /* Styling the images in the table */
   table img {
       width: 200px;
@@ -267,9 +286,9 @@ td {
 }
 
     .popup p {
-    font-size: 14px; /* Set font size for the paragraph text */
+    font-size: 12px; /* Set font size for the paragraph text */
     line-height: 1; /* Improve readability */
-    margin-bottom: 10px; /* Space between the paragraphs */
+    margin-bottom: 1px; /* Space between the paragraphs */
 }
 .popup input[type="checkbox"] {
     width: 8px;  /* Set the width of the checkbox */
@@ -478,6 +497,13 @@ td {
                 <input type="submit" value="Search" class="btn btn-primary">
             </div>
         </form>
+<!-- Add buttons to sort the table -->
+<div class="sort-buttons">
+    <button onclick="sortTable('created_at', 'asc')">Sort by Created At (Oldest to Newest)</button>
+    <button onclick="sortTable('created_at', 'desc')">Sort by Created At (Newest to Oldest)</button>
+    <button onclick="sortTable('updated_at', 'asc')">Sort by Updated At (Oldest to Newest)</button>
+    <button onclick="sortTable('updated_at', 'desc')">Sort by Updated At (Newest to Oldest)</button>
+</div>
 
         
 
@@ -487,6 +513,7 @@ td {
         <?php elseif (isset($error_message)): ?>
             <p class="error-message"><?php echo $error_message; ?></p>
         <?php endif; ?>
+        
 
         <?php if ($result->num_rows > 0): ?>
          <div class="table-container">
@@ -523,61 +550,45 @@ td {
                     </tr>
                 </thead>
                 <tbody>
-                    <?php
-                    
-                    while($row = $result->fetch_assoc()) {
-                        // Check if an image is uploaded for the car
-                        $image_path = $row['image'] ? 'uploads/' . $row['image'] : 'uploads/default.jpg'; // Default image if none is uploaded
-                        $image_path2 = $row['image2'] ? 'uploads/' . $row['image2'] : 'uploads/default.jpg'; // Default image2 if none is uploaded
-                        $image_path3 = $row['image3'] ? 'uploads/' . $row['image3'] : 'uploads/default.jpg'; // Default image if none is uploaded
-                        $image_path4 = $row['image4'] ? 'uploads/' . $row['image4'] : 'uploads/default.jpg'; // Default image2 if none is uploaded
+                <?php
+while($row = $result->fetch_assoc()) {
+    // Check if an image is uploaded for the car
+    $image_path = $row['image'] ? 'uploads/' . $row['image'] : 'uploads/default.jpg'; // Default image if none is uploaded
+    $image_path2 = $row['image2'] ? 'uploads/' . $row['image2'] : 'uploads/default.jpg'; // Default image2 if none is uploaded
+    $image_path3 = $row['image3'] ? 'uploads/' . $row['image3'] : 'uploads/default.jpg'; // Default image3 if none is uploaded
+    $image_path4 = $row['image4'] ? 'uploads/' . $row['image4'] : 'uploads/default.jpg'; // Default image4 if none is uploaded
 
-                        echo "<tr>
-                           <td> 
-                                    <img src='" . $image_path . "' onclick='showDetails(\"" . $row['customer_name'] . "\", \"" . $row['plate'] . "\", \"" . $row['chasis'] . "\", \"" . $row['brand'] . "\", \"" . $row['year'] . "\", \"" . $row['model'] . "\", \"" . $row['km_mile'] . "\", \"" . $row['accident_visual'] . "\", \"" . $row['accident_tramer'] . "\", \"" . $row['msf'] . "\", \"" . $row['dsf'] . "\", \"" . $row['gsf'] . "\", \"" . $row['package'] . "\", \"" . $row['color'] . "\", \"" . $row['engine'] . "\", \"" . $row['gear'] . "\", \"" . $row['fuel'] . "\", \"" . $row['expense_detail'] . "\", \"" . $row['current_total_expense'] . "\", \"" . $image_path . "\", \"" . $image_path2 . "\", \"" . $image_path3 . "\", \"" . $image_path4 . "\", \"" . $row['created_at'] . "\", \"" . $row['updated_at'] . "\", \"" . $row['created_by'] . "\", \"" . $row['updated_by'] . "\")'>
-                                </td>
-                                
-                                <td>" . $row['customer_name'] . "</td>
-                                <td>" . $row['plate'] . "</td>
-                                <td>" . substr($row['chasis'], 0, 7) . "</td>
-                                <td>" . $row['brand'] . "</td>
-                                <td>" . $row['year'] . "</td>
-                                <td>" . $row['model'] . "</td>
-                                <td>" . $row['km_mile'] . "</td>
-                                <td>" . $row['accident_visual'] . "</td>
-                                <td>" . $row['accident_tramer'] . "</td>
-                                <td>" . $row['msf'] . "</td>
-                                <td>" . $row['dsf'] . "</td>
-                                <td>" . $row['gsf'] . "</td>
-                                <td>" . $row['package'] . "</td>
-                                <td>" . $row['color'] . "</td>
-                                <td>" . $row['engine'] . "</td>
-                                <td>" . $row['gear'] . "</td>
-                                <td>" . $row['fuel'] . "</td>
-                                <td>" . $row['expense_detail'] . "</td>
-                                <td>" . $row['current_total_expense'] . "</td>
-                                <td>" . $row['created_at'] . "</td>
-                                <td>" . $row['updated_at'] . "</td>       
-                                <td>" . $row['created_by'] . "</td>
-                                <td>" . $row['updated_by'] . "</td>
-                                
-                                <td>
-                                    <a href='index.php?edit_id=" . $row['id'] . "' class='btn btn-edit'>
-                                        Edit
-                                    </a>
-                                </td>
-                                
-                                <td>
-                                    <a href='delete.php?id=" . $row['id'] . "' class='btn btn-delete' onclick=\"return confirm('Are you sure you want to delete this record?');\">
-                                        Delete
-                                    </a>
-                                </td>
+    echo "<tr>
+        <td><img src='" . $image_path . "' onclick='showDetails(\"" . $row['customer_name'] . "\", \"" . $row['plate'] . "\", \"" . $row['chasis'] . "\", \"" . $row['brand'] . "\", \"" . $row['year'] . "\", \"" . $row['model'] . "\", \"" . $row['km_mile'] . "\", \"" . $row['accident_visual'] . "\", \"" . $row['accident_tramer'] . "\", \"" . $row['msf'] . "\", \"" . $row['dsf'] . "\", \"" . $row['gsf'] . "\", \"" . $row['package'] . "\", \"" . $row['color'] . "\", \"" . $row['engine'] . "\", \"" . $row['gear'] . "\", \"" . $row['fuel'] . "\", \"" . $row['expense_detail'] . "\", \"" . $row['current_total_expense'] . "\", \"" . $image_path . "\", \"" . $image_path2 . "\", \"" . $image_path3 . "\", \"" . $image_path4 . "\", \"" . $row['created_at'] . "\", \"" . $row['updated_at'] . "\", \"" . $row['created_by'] . "\", \"" . $row['updated_by'] . "\")'></td>
+        <td>" . $row['customer_name'] . "</td>
+        <td>" . $row['plate'] . "</td>
+        <td>" . substr($row['chasis'], 0, 7) . "</td>
+        <td>" . $row['brand'] . "</td>
+        <td>" . $row['year'] . "</td>
+        <td>" . $row['model'] . "</td>
+        <td>" . $row['km_mile'] . "</td>
+        <td>" . $row['accident_visual'] . "</td>
+        <td>" . $row['accident_tramer'] . "</td>
+        <td>" . $row['msf'] . "</td>
+        <td>" . $row['dsf'] . "</td>
+        <td>" . $row['gsf'] . "</td>
+        <td>" . $row['package'] . "</td>
+        <td>" . $row['color'] . "</td>
+        <td>" . $row['engine'] . "</td>
+        <td>" . $row['gear'] . "</td>
+        <td>" . $row['fuel'] . "</td>
+        <td><div class='cell-content'>" . $row['expense_detail'] . "</div></td>
+        <td>" . $row['current_total_expense'] . "</td>
+        <td data-column='created_at'>" . $row['created_at'] . "</td>
+        <td data-column='updated_at'>" . $row['updated_at'] . "</td>
+        <td>" . $row['created_by'] . "</td>
+        <td>" . $row['updated_by'] . "</td>
+        <td><a href='index.php?edit_id=" . $row['id'] . "' class='btn btn-edit'>Edit</a></td>
+        <td><a href='delete.php?id=" . $row['id'] . "' class='btn btn-delete' onclick=\"return confirm('Are you sure you want to delete this record?');\">Delete</a></td>
+    </tr>";
+}
+?>
 
-                        
-                        </tr>";
-                    }
-                    
-                    ?>
                 </tbody>
             </table>
          </div>
@@ -593,17 +604,32 @@ td {
 
     <div class="popup" id="popup">
     <div class="popup-image-wrapper" style="position: relative;">
-        <!-- Print Button (🖨️) -->
-        <button onclick="printPopup()" title="Print" style="position: absolute; top: 10px; right: 10px; background: none; border: none; cursor: pointer;">
-            🖨️
-        </button>
+        <!-- Print Button -->
+        <button onclick="printPopup()" title="Print" style="position: absolute; top: 0px; right: 5px; background: none; border: none; cursor: pointer;">
+    <img src="uploads/pi.jpg" alt="Print" style="width: 35px; height: 35px;">
+    </button>
+
         <!-- Image Navigation -->
         <button class="arrow left-arrow" onclick="previousImage()">⬅️</button>
         <img id="popup-img" src="" alt="Car Image" onclick="toggleImageSize()">
         <button class="arrow right-arrow" onclick="nextImage()">➡️</button>
     </div>
 
-     <h2 id="popup-name"></h2>
+
+    <!-- Select All Checkbox -->
+<p>
+  <label>
+    <input type="checkbox" id="select-all-checkbox">
+    <strong>Select All</strong>
+  </label>
+</p>
+    <p>
+  <label>
+    <input type="checkbox" class="print-checkbox" unchecked>
+    <strong>Name:</strong>
+  </label>
+  <span id="popup-name"></span>
+</p>
     <!-- Each Detail with Checkboxes -->
     <p><label><input type="checkbox" class="print-checkbox" unchecked> <strong>Plate:</strong></label> <span id="popup-plate"></span></p>
     <p><label><input type="checkbox" class="print-checkbox" unchecked> <strong>Chasis:</strong></label> <span id="popup-chasis"></span></p>
@@ -635,6 +661,13 @@ td {
         <p>&copy; 2025 Serhan Kombos Otomotiv</p>
     </footer>
 
+
+    <script>
+  document.getElementById('select-all-checkbox').addEventListener('change', function () {
+    const checkboxes = document.querySelectorAll('.print-checkbox');
+    checkboxes.forEach(cb => cb.checked = this.checked);
+  });
+</script>
     <script>
                    let imageIndex = 0;
                     let images = [];
@@ -684,6 +717,31 @@ td {
                         document.getElementById('popup-img').src = images[imageIndex];
                     }
 
+                      // Function to sort the table
+    function sortTable(column, order) {
+        let table = document.querySelector('table tbody');
+        let rows = Array.from(table.rows);
+        
+        rows.sort((rowA, rowB) => {
+            let cellA = rowA.querySelector(`td[data-column="${column}"]`).innerText;
+            let cellB = rowB.querySelector(`td[data-column="${column}"]`).innerText;
+            
+            // Convert the text into Date objects for comparison
+            let dateA = new Date(cellA);
+            let dateB = new Date(cellB);
+            
+            // Handle ascending or descending order
+            if (order === 'asc') {
+                return dateA - dateB;
+            } else {
+                return dateB - dateA;
+            }
+        });
+
+        // Reattach sorted rows to the table body
+        rows.forEach(row => table.appendChild(row));
+    }
+
         function closePopup() {
             // Hide the overlay and popup
             document.getElementById('overlay').style.display = 'none';
@@ -715,12 +773,19 @@ td {
         }
     });
 
+    // ✅ Remove the "Select All" checkbox (if present)
+    const selectAll = clone.querySelector('#select-all-checkbox');
+    if (selectAll) {
+        const selectAllRow = selectAll.closest('p');
+        if (selectAllRow) selectAllRow.remove();
+    }
+
     // Remove buttons/arrows from the print view
     clone.querySelectorAll(".arrow, button").forEach(el => el.style.display = "none");
 
     const popupImg = document.getElementById("popup-img");
-    const imgWidth = popupImg.clientWidth;
-    const imgHeight = popupImg.clientHeight;
+    const imgWidth = popupImg?.clientWidth || 0;
+    const imgHeight = popupImg?.clientHeight || 0;
 
     const printWindow = window.open('', '', 'width=800,height=600');
     printWindow.document.write(`

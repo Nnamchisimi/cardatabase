@@ -52,7 +52,6 @@ if (isset($_GET['edit_id'])) {
         $current_expense = $row['current_total_expense'];
         $image = $row['image'];
         $image2 = $row['image2'];
-        
         $image3 = $row['image3'];
         $image4 = $row['image4'];
         
@@ -154,6 +153,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         // Keep the existing image if it's being updated and no new image is uploaded
         $image4 = $row['image4'];
     }
+    
 
     // Get the current timestamp for created_at and updated_at
     $timestamp = getCurrentTimestamp();
@@ -1043,14 +1043,14 @@ window.onload = function() {
         }
 
 
-        form {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            padding: 10px;
-            max-width: 100%;
-        }
-
+       form {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* 3 equal-width columns */
+  gap: 15px; /* Space between the form fields */
+  padding: 10px;
+  max-width: 100%;
+  position: relative; /* Ensure the form container is a reference point for the button */
+}
         .form-group {
             display: flex;
             flex-direction: column;
