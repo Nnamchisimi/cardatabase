@@ -1,23 +1,19 @@
 <?php
 session_start();
 
-// Check if the user is logged in
-if (!isset($_SESSION['user_id'])) {
-    // If the user is not logged in, display the message and a button to go back to login
-    echo '
-    <div style="text-align: center; margin-top: 50px; background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 20px; border-radius: 8px;">
-        <h2>You need to be logged in to view car details.</h2>
-        <p>Please log in first.</p>
-        <a href="login.php" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Go to Login</a>
-    </div>';
-    exit;  // Stop the script from executing further
-}
-$username = $_SESSION['username'] ?? 'User';  // Default to 'User' if username is not set
 
-// Retrieve the user's role
+if (!isset($_SESSION['user_id'])) {
+   
+    header("Location: login.php");
+    exit; 
+}
+
+$username = $_SESSION['username'] ?? 'User';  
+
+
 $role = $_SESSION['role'] ?? 'user'; // Default to 'user' if role is not set
 
-// Determine where to redirect based on role
+
 $viewCarsLink = ($role === 'admin') ? 'display.php' : 'userdisplay.php';
 ?>
 
@@ -27,9 +23,9 @@ $viewCarsLink = ($role === 'admin') ? 'display.php' : 'userdisplay.php';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Car Management System</title>
-    <link rel="stylesheet" href="styles.css"> <!-- Keep this if you want additional external styles -->
+    <link rel="stylesheet" href="styles.css"> 
     <style>
-        /* Inline CSS for Background Image */
+       
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
@@ -39,11 +35,71 @@ $viewCarsLink = ($role === 'admin') ? 'display.php' : 'userdisplay.php';
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            background-image: url('static/images/vl6967y3.png'); /* Path to your background image */
-            background-size: cover; /* Ensures the image covers the entire screen */
-            background-position: center center; /* Centers the image */
-            background-attachment: fixed; /* Keeps the image fixed when scrolling */
+            background-image: url('static/images/vl6967y3.png'); 
+            background-size: cover; 
+            background-position: center center; 
+            background-attachment: fixed; 
         }
+        .header-with-actions {
+    background-color: #000000;
+    padding: 20px;
+    border-bottom: 2px solid #ccc;
+    font-family: Arial, sans-serif;
+    position:absolute;
+    width:100%;
+}
+
+.header-with-actions h1 {
+    height: 10px; /* adjust as needed */
+    margin: 0 0 10px 0;
+    font-size: 28px;
+    text-align: center;
+    color: white;
+}
+
+.header-row {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+}
+
+.page-title {
+    grid-column: 2;
+    margin: 0;
+    font-size: 20px;
+    text-align: center;
+    color: #444;
+}
+
+.action-links {
+    grid-column: 3;
+    justify-self: end;
+    display: flex;
+    gap: 15px;
+}
+
+.action-link {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+    color: #333;
+    font-weight: bold;
+}
+
+.action-link img {
+    height: 20px;
+    width: 20px;
+    margin-right: 6px;
+}
+        .action-links a {
+            text-decoration: none;
+            color: white;
+            padding: 10px 20px;
+            font-size: 1em;
+            border-radius: 5px;
+            transition: background-color 0.5s ease;
+        }
+
 
         /* Container settings */
         .container {
@@ -54,44 +110,43 @@ $viewCarsLink = ($role === 'admin') ? 'display.php' : 'userdisplay.php';
             align-items: center;
         }
 
-        /* Home container (central content) */
+   
         .home-container {
             text-align: center;
-            background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent white background */
+            background-color: rgba(255, 255, 255, 0.8); 
             padding: 40px;
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            max-width: 600px; /* Ensure it doesn't stretch too wide */
+            max-width: 600px; 
         }
 
-        /* Header text */
+
         h1 {
             font-size: 1.5rem;
             margin-bottom: 20px;
             color: #333;
         }
-          /* Header text */
+    
           h2 {
             font-size: 2rem;
             margin-bottom: 10px;
             color: #333;
         }
 
-        /* Paragraph text */
+ 
         p {
             font-size: 1.2rem;
             margin-bottom: 30px;
             color: #666;
         }
 
-        /* Button container styles */
         .button-container {
             display: flex;
             justify-content: center;
             gap: 20px;
         }
 
-        /* Common button styles */
+ 
         .btn-home {
             display: inline-block;
             text-decoration: none;
@@ -104,28 +159,25 @@ $viewCarsLink = ($role === 'admin') ? 'display.php' : 'userdisplay.php';
             transition: all 0.3s ease;
         }
 
-        /* Add car button styles */
+      
         .add-car-btn {
-            background-color: #4CAF50; /* Green for adding a car */
+            background-color: black; 
         }
 
-        /* View car details button styles */
         .view-cars-btn {
-            background-color: #2196F3; /* Blue for viewing car details */
+            background-color: black; 
         }
 
-        /* Sign out button styles */
+  
         .signout-btn {
-            background-color: #d9534f; /* Red for signing out */
-        }
+            background-color: #d9534f; 
 
-        /* Hover effects */
         .btn-home:hover {
             transform: scale(1.05);
             opacity: 0.9;
         }
 
-        /* Responsive styles for mobile */
+      
         @media (max-width: 768px) {
             h1 {
                 font-size: 2rem;
@@ -147,17 +199,30 @@ $viewCarsLink = ($role === 'admin') ? 'display.php' : 'userdisplay.php';
     </style>
 </head>
 <body>
+
+<header class="header-with-actions">
+    <h1>SERHAN KOMBOS OTOMOTIV</h1>
+      <a href="login.php?logout=true" class="btn-home signout-btn">
+                        <img src="logoutt.png" alt="Log-Out" style="height: 20px; vertical-align: middle; margin-right: 8px;">
+                    </a>
+
+</header>
     <div class="container">
         <div class="home-container">
              <h2>Hello <?php echo htmlspecialchars($username); ?>!</h2>
             <h1>Welcome to the Car Management System</h1>
             <p>Manage your car details with ease. Select an option below:</p>
             
-                    <div class="button-container">
-            <a href="index.php" class="btn-home add-car-btn">➕ Add New Car</a>
-            <a href="<?php echo $viewCarsLink; ?>" class="btn-home view-cars-btn">🚗 View Car Details</a>
-            <!-- Modify the sign-out link to include a query parameter -->
-            <a href="login.php?logout=true" class="btn-home signout-btn">🚪 Sign Out</a>
+            <div class="button-container">
+                    <a href="index.php" class="btn-home add-car-btn">
+                         <img src="add.png" alt="Add New Car" style="height: 20px; vertical-align: middle; margin-right: 8px;">Add New Car
+                    </a>
+
+                    <a href="<?php echo $viewCarsLink; ?>" class="btn-home view-cars-btn">
+                        <img src="carr.png" alt="View Car Details" style="height: 20px; vertical-align: middle; margin-right: 8px;">View Car Details
+                      </a>
+          
+                   
             </div>
 
         </div>

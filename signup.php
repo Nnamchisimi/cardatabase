@@ -10,7 +10,7 @@ if (isset($_POST['signup'])) {
     $password = password_hash($_POST['password'], PASSWORD_BCRYPT); // Hash password
     $email = $_POST['email']; // Get email from form
 
-    // Check if the username or email already exists
+
     $stmt = $conn->prepare("SELECT * FROM users WHERE username = ? OR email = ?");
     $stmt->bind_param("ss", $username, $email);
     $stmt->execute();
@@ -19,7 +19,7 @@ if (isset($_POST['signup'])) {
     if ($result->num_rows > 0) {
         $error_message = "Username or Email already exists! Please choose a different username or email.";
     } else {
-        // Insert the new user (first name, last name, username, email, and hashed password)
+
         $stmt = $conn->prepare("INSERT INTO users (first_name, last_name, username, password, email) VALUES (?, ?, ?, ?, ?)");
         $stmt->bind_param("sssss", $first_name, $last_name, $username, $password, $email);
         $stmt->execute();

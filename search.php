@@ -1,14 +1,14 @@
 <?php
 include('db_connection.php');
 
-// Initialize the search query
+
 $search_query = '';
 
-// Check if search is submitted
+
 if (isset($_POST['search'])) {
-    // Get the customer name from the form
+   
     $search_query = $_POST['search'];
-    // Redirect to display.php with the search query as a URL parameter
+    
     header("Location: display.php?search=$search_query");
     exit();
 }

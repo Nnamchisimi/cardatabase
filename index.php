@@ -2,28 +2,24 @@
 session_start();
 include('db_connection.php');
 
-// Function to get the current timestamp in Turkey's timezone
+
 function getCurrentTimestamp() {
-    // Set the timezone to Turkey's timezone (UTC+3)
+
     date_default_timezone_set('Europe/Istanbul');
     
-    // Return the formatted date in "Y-m-d H:i:s"
+
     return date("Y-m-d H:i:s");
 }
 
-// Check if the user is logged in
+
 if (!isset($_SESSION['user_id'])) {
-    // If the user is not logged in, display the message and a button to go back to login
-    echo '
-    <div style="text-align: center; margin-top: 50px; background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 20px; border-radius: 8px;">
-        <h2>You need to be logged in to view car details.</h2>
-        <p>Please log in first.</p>
-        <a href="login.php" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Go to Login</a>
-    </div>';
-    exit;  // Stop the script from executing further
+
+    header("Location: login.php");
+    exit; 
 }
 
-// Check if we are editing an existing car
+
+
 if (isset($_GET['edit_id'])) {
     $edit_id = $_GET['edit_id'];
     $sql = "SELECT * FROM cars WHERE id = '$edit_id'";
@@ -56,19 +52,19 @@ if (isset($_GET['edit_id'])) {
         $image4 = $row['image4'];
         
         
-        // Now, extract km_value and km_unit from km_mile (like "25 KM" or "25 MILE")
-        $km_value = ''; // Default empty value for numeric part
-        $km_unit = ''; // Default empty value for unit (KM or MILE)
+       
+        $km_value = ''; 
+        $km_unit = ''; 
         
         if (!empty($km_mile)) {
-            // Split km_mile into numeric value and unit
+       
             $parts = explode(' ', trim($km_mile));
             $km_value = isset($parts[0]) ? $parts[0] : '';  // The numeric part (e.g., 25)
             $km_unit = isset($parts[1]) ? strtoupper($parts[1]) : '';  // The unit part (KM or MILE)
             }
     }
 } else {
-    // Default values for a new car entry
+
     $customer_name = $plate = $chasis = $brand = $year = $model = $km_mile = $accident_visual = $accident_tramer = $msf = $dsf = $gsf = $package = $color = $engine = $gear = $fuel = $expense_detail = $current_expense = $image = $image2 = $image3 = $image4 = '';
         $km_value = ''; // Default empty value for numeric part
         $km_unit = '';  // Default empty value for unit (KM or MILE)
@@ -79,14 +75,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $plate = $_POST['plate'];
     $chasis = $_POST['chasis'];
     if ($_POST['brand'] === 'other' && !empty($_POST['other_brand'])) {
-        $brand = trim($_POST['other_brand']); // Use the custom value
+        $brand = trim($_POST['other_brand']);
     } else {
-        $brand = $_POST['brand']; // Use the selected value
+        $brand = $_POST['brand']; 
     }
 
     $year = $_POST['year'];
 
-    // Handle custom model
+
     if ($_POST['model'] === 'other' && !empty($_POST['other_model'])) {
         $model = trim($_POST['other_model']); // Use the custom model value
     } else {
@@ -109,83 +105,79 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $current_expense = $_POST['current_expense'];
 
  
-    // Handle file upload for images
+
     if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
         $image = $_FILES['image']['name'];
         $image_tmp = $_FILES['image']['tmp_name'];
         $image_folder = 'uploads/' . $image;
         move_uploaded_file($image_tmp, $image_folder);
     } elseif (isset($_GET['edit_id'])) {
-        // Keep the existing image if it's being updated and no new image is uploaded
+  
         $image = $row['image'];
     }
 
-    // Handle file upload for second image
+ 
     if (isset($_FILES['image2']) && $_FILES['image2']['error'] == 0) {
         $image2 = $_FILES['image2']['name'];
         $image_tmp2 = $_FILES['image2']['tmp_name'];
         $image_folder2 = 'uploads/' . $image2;
         move_uploaded_file($image_tmp2, $image_folder2);
     } elseif (isset($_GET['edit_id'])) {
-        // Keep the existing image if it's being updated and no new image is uploaded
+      
         $image2 = $row['image2'];
     }
 
-    // Handle file upload for third image
+  
     if (isset($_FILES['image3']) && $_FILES['image3']['error'] == 0) {
         $image3 = $_FILES['image3']['name'];
         $image_tmp3 = $_FILES['image3']['tmp_name'];
         $image_folder3 = 'uploads/' . $image3;
         move_uploaded_file($image_tmp3, $image_folder3);
     } elseif (isset($_GET['edit_id'])) {
-        // Keep the existing image if it's being updated and no new image is uploaded
+      
         $image3 = $row['image3'];
     }
 
-
-    // Handle file upload for fourth image
     if (isset($_FILES['image4']) && $_FILES['image4']['error'] == 0) {
         $image4 = $_FILES['image4']['name'];
         $image_tmp4 = $_FILES['image4']['tmp_name'];
         $image_folder4 = 'uploads/' . $image4;
         move_uploaded_file($image_tmp4, $image_folder4);
     } elseif (isset($_GET['edit_id'])) {
-        // Keep the existing image if it's being updated and no new image is uploaded
+
         $image4 = $row['image4'];
     }
     
 
-    // Get the current timestamp for created_at and updated_at
     $timestamp = getCurrentTimestamp();
 
     if (isset($_GET['edit_id'])) {
-        // Update the car details
         $sql = "UPDATE cars SET customer_name = '$customer_name', plate = '$plate', chasis = '$chasis', brand = '$brand', year = '$year', model = '$model', km_mile = '$km_mile', accident_visual = '$accident_visual', accident_tramer = '$accident_tramer', msf = '$msf', dsf = '$dsf', gsf = '$gsf', package = '$package', color = '$color', engine = '$engine', gear = '$gear', fuel = '$fuel', expense_detail = '$expense_detail', current_total_expense = '$current_expense', image = '$image', image2 = '$image2', image3 = '$image3', image4 = '$image4', updated_at = '$timestamp', updated_by = '{$_SESSION['username']}' WHERE id = '$edit_id'";
 
         if ($conn->query($sql) === TRUE) {
-            // Clear form after successful submission
+        
             unset($customer_name, $plate, $chasis, $brand, $year, $model, $km_mile, $accident_visual, $accident_tramer, $msf, $dsf, $gsf, $package, $color, $engine, $gear, $fuel, $expense_detail, $current_expense, $image, $image2, $image3, $image4);
 
-            // ✅ **ADD REDIRECT BASED ON USER ROLE HERE**
+          
             if ($_SESSION['role'] === 'admin') {
                 header("Location: display.php");
             } else {
                 header("Location: userdisplay.php");
             }
-            exit(); // Stop further execution
+            exit(); 
         } else {
             echo "Error: " . $conn->error;
         }
     } else {
-        // Insert new car data
+ 
         $sql = "INSERT INTO cars (customer_name, plate, chasis, brand, year, model, km_mile, accident_visual, accident_tramer, msf, dsf, gsf, package, color, engine, gear, fuel, expense_detail, current_total_expense, image, image2, image3, image4, created_at, created_by) 
         VALUES ('$customer_name', '$plate', '$chasis', '$brand', '$year', '$model', '$km_mile', '$accident_visual', '$accident_tramer', '$msf', '$dsf', '$gsf', '$package', '$color', '$engine', '$gear', '$fuel', '$expense_detail', '$current_expense', '$image', '$image2', '$image3', '$image4', '$timestamp', '{$_SESSION['username']}')";
 
         if ($conn->query($sql) === TRUE) {
-            // Clear form after successful submission
+          
             unset($customer_name, $plate, $chasis, $brand, $year, $model, $km_mile, $accident_visual, $accident_tramer, $msf, $dsf, $gsf, $package, $color, $engine, $gear, $fuel, $expense_detail, $current_expense);
 
-            // ✅ **ADD REDIRECT BASED ON USER ROLE HERE**
+        
             if ($_SESSION['role'] === 'admin') {
                 header("Location: display.php");
             } else {
@@ -209,10 +201,31 @@ $conn->close();
 
 <body>
 
-<header>
+<header class="header-with-actions">
     <h1>SERHAN KOMBOS OTOMOTIV</h1>
-    <h2><?php echo isset($_GET['edit_id']) ? 'Update Database' : 'Car Database'; ?></h2>
+
+    <div class="header-row">
+        <div class="action-links">
+
+        
+            <a href="index.php" class="action-link">
+                <img src="add.png" alt="Add Icon">
+                Add cars
+            </a>
+            
+            
+            <a href="home.php" class="action-link">
+                <img src="homw.png" alt="Home Icon">
+                Home
+            </a>
+         
+          
+        </div>
+    </div>
 </header>
+
+
+
 
 
 <div class="container">
@@ -496,9 +509,9 @@ $conn->close();
         </div>
         <?php
                 // Initialize the variables $msf and $dsf with some default value
-                $msf = isset($msf) ? $msf : ''; // Default empty string if $msf is not set
-                $dsf = isset($dsf) ? $dsf : ''; // Default empty string if $dsf is not set
-                $gsf = isset($gsf) ? $gsf : ''; // Default empty string if $gsf is not set
+                $msf = isset($msf) ? $msf : ''; 
+                $dsf = isset($dsf) ? $dsf : ''; 
+                $gsf = isset($gsf) ? $gsf : ''; 
 
                 // Extract numeric price and currency separately for msf
                 $msf_parts = explode(" ", $msf);
@@ -563,7 +576,7 @@ $conn->close();
             </div>
         </div>
 
-        <!-- Car Images -->
+    
         <!-- File Upload -->
 <!-- Car Image 1 -->
 <div class="form-group">
@@ -665,11 +678,6 @@ $conn->close();
 </div>
 
 
-<div class="action-links">
-       <a href="home.php">Back To Home</a>
-        <a href="display.php">View Submitted Cars</a>
-     
-    </div>
 
 
 
@@ -793,9 +801,9 @@ $conn->close();
                 alert("Please select a currency for all fields (MSF, DSF, and GSF).");
                 return false;  // Prevent form submission
             }
-            return true;  // Allow form submission
+            return true;  
         }
-                // Function to toggle the 'Other' input field based on select option
+               
             function toggleOtherField() {
                 var selectElement = document.getElementById('accident_visual');
                 var otherInput = document.getElementById('other_accident_visual');
@@ -807,7 +815,7 @@ $conn->close();
                 }
             }
 
-// Call the function on page load to check if 'Other' was selected previously
+
 window.onload = function() {
     toggleOtherField();
 }
@@ -841,7 +849,7 @@ window.onload = function() {
         const plate = plateInput.value.trim();
         const platePattern = /^[A-Z]{2} \d{3}$/; // Matches format like "VV 700"
 
-        // Check if the plate matches the required format
+      
         if (!platePattern.test(plate)) {
             document.getElementById("plateError").style.display = "inline"; // Show error message
             event.preventDefault(); // Prevent form submission
@@ -869,7 +877,6 @@ window.onload = function() {
     var km_mile_Value = document.getElementById("km_mile_value").value;
     var currency = document.getElementById("currency_selector3").value;
 
-    // When both the numeric value and the unit are available, update the hidden input
     if (km_mile_Value && currency) {
         // Combine the numeric value with the unit (e.g., "25 KM" or "25 MILE")
         var displayValue = km_mile_Value + " " + currency;
@@ -891,7 +898,7 @@ function updateModels() {
     const brandDropdown = document.getElementById("brand");
     const modelDropdown = document.getElementById("model");
 
-    const selectedModel = "<?php echo isset($model) ? $model : ''; ?>"; // Get the selected model from PHP
+    const selectedModel = "<?php echo isset($model) ? $model : ''; ?>";
     const selectedBrand = brandDropdown.value;
 
     // Clear existing options
@@ -905,8 +912,7 @@ function updateModels() {
     if (!selectedModel || selectedModel === "") selectOption.selected = true;
     modelDropdown.appendChild(selectOption);
 
-    // Add models based on selected brand
-    let modelFound = false;  // To track if the selected model exists in the brand list
+    let modelFound = false; 
     if (selectedBrand && carModels[selectedBrand]) {
         carModels[selectedBrand].forEach(model => {
             const option = document.createElement("option");
@@ -976,15 +982,14 @@ function checkOtherModel() {
 
 // Ensure that the correct options and inputs are shown on page load
 window.onload = function() {
-    updateModels();         // Load models based on selected brand
-    checkOtherBrand();      // Show/hide brand input based on "Other"
-    checkOtherModel();      // Show/hide model input based on "Other"
+    updateModels();       
+    checkOtherModel();    
 };
        // Place the Confirmation Popup Here 👇👇👇
        document.querySelector("form").onsubmit = function (event) {
         const confirmation = confirm("Are you sure you want to submit the data?");
         if (!confirmation) {
-            event.preventDefault(); // Stops the submission if user clicks Cancel
+            event.preventDefault(); 
         }
     };
 </script>
@@ -1008,27 +1013,63 @@ window.onload = function() {
             background-size: cover;
             display: flex;
             flex-direction: column;
-            justify-content: flex-start;  /* Adjusted to keep content at the top */
-            overflow-x: hidden; /* Prevent horizontal overflow */
+            justify-content: flex-start; 
+            overflow-x: hidden; 
         }
 
-        header {
-            background-color: #000;
-            color: #fff;
-            padding: 15px 0;
-            text-align: center;
-        }
+ .header-with-actions {
+    background-color: #000000;
+    padding: 8px;
+    border-bottom: 2px solid #ccc;
+    font-family: Arial, sans-serif;
+}
 
-        header h1 {
-            font-size: 2rem; /* Adjusted size */
-            margin: 0;
-        }
+.header-with-actions h1 {
+    height: 0px; /* adjust as needed */
+    margin: 0 0 10px 0;
+    font-size: 28px;
+    text-align: center;
+    color: white;
+}
 
-        header h2 {
-            font-size: 1.2rem;
-            margin: 5px 0;
-            color: #aaa;
-        }
+.header-row {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+}
+
+.page-title {
+    grid-column: 2;
+    margin: 0;
+    font-size: 20px;
+    text-align: center;
+    color: #444;
+}
+
+.action-links {
+    grid-column: 3;
+    justify-self: end;
+    display: flex;
+    gap: 15px;
+}
+
+.action-link {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+    color: #333;
+    font-weight: bold;
+    height: 30px;
+    width: 103px;
+}
+
+.action-link img {
+    height: 20px;
+    width: 20px;
+    margin-right: 6px;
+}
+
+
 
         .container {
             background-color: rgba(255, 255, 255, 0.85); /* Adjust opacity */
@@ -1044,13 +1085,13 @@ window.onload = function() {
 
 
        form {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr); /* 3 equal-width columns */
-  gap: 15px; /* Space between the form fields */
-  padding: 10px;
-  max-width: 100%;
-  position: relative; /* Ensure the form container is a reference point for the button */
-}
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 15px; /* Space between the form fields */
+            padding: 10px;
+            max-width: 100%;
+            position: relative; 
+            }
         .form-group {
             display: flex;
             flex-direction: column;
@@ -1109,7 +1150,7 @@ window.onload = function() {
         .action-links a {
             text-decoration: none;
             color: white;
-            background-color: #45a049;
+      
             padding: 10px 20px;
             font-size: 1em;
             border-radius: 5px;
@@ -1117,8 +1158,53 @@ window.onload = function() {
         }
 
         .action-links a:hover {
-            background-color: #555;
+            background-color: grey;
         }
+        /* Styling the nav container */
+        nav {
+        display: flex;
+        justify-content: center;
+        padding: 8px 1;
+        border-radius: 8px;
+        margin-top: 2px;
+        height: 50%;
+        transition: all 0.3s ease;
+    }
+
+    /* Styling the individual links in the nav */
+    nav a {
+        color: #f1f1f1;
+        padding: 10px 10px;
+        font-size: 1.2rem;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-block;
+        border-radius: 5px;
+        margin: 0 20px;
+        position: relative;
+        transition: all 0.3s ease;
+    }
+
+    /* Hover effect for navigation links */
+    nav a:hover {
+        background-color: #555;
+        color: #fff;
+        transform: translateY(-6px);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Underline on hover */
+    nav a:hover::after {
+        content: "";
+        position: absolute;
+        bottom: -5px;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background-color: #fff;
+        border-radius: 5px;
+    }
+    
 
         footer {
             background-color: #000;
@@ -1138,10 +1224,42 @@ window.onload = function() {
                 width: 100%;
             }
 
-            .action-links {
-                flex-direction: column;
-                align-items: center;
-            }
+       .header-with-actions {
+        padding: 10px;
+    }
+
+    .header-with-actions h1 {
+        font-size: 20px;
+        margin-bottom: 5px;
+    }
+
+    .header-row {
+        grid-template-columns: 1fr;
+        text-align: center;
+        row-gap: 10px;
+    }
+
+    .page-title,
+    .action-links {
+        grid-column: auto;
+    }
+
+    .action-links {
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .action-link {
+        width: auto;
+        font-size: 14px;
+        padding: 8px 12px;
+    }
+
+
+   nav {
+        display: none  ;
+    }
         }
     </style>
 </head>

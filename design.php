@@ -1,5 +1,5 @@
 <?php
-// Include the database connection
+
 include('db_connection.php');
 include("index.php");
 
@@ -270,8 +270,7 @@ foreach ($fields as $id => $label) {
             </select>
         </div>
 
-        <!-- File Upload -->
-      <!-- File Upload -->
+     
 <div class="form-group">
     <label for="image">Car Image:</label>
     <input type="file" id="image" name="image" <?php echo isset($_GET['edit_id']) ? '' : 'required'; ?> />
@@ -393,20 +392,20 @@ foreach ($fields as $id => $label) {
     const brandDropdown = document.getElementById("brand");
     const modelDropdown = document.getElementById("model");
 
-    // Always add the "Select" option at the top
+    //To always add the "Select" option at the top
     modelDropdown.innerHTML = '<option value="" disabled selected>Select</option>';
 
     const selectedBrand = brandDropdown.value; // Get selected brand
     const selectedModel = "<?php echo $model; ?>"; // Get model from PHP
 
     if (selectedBrand && carModels[selectedBrand]) {
-        // Loop through and add models based on selected brand
+        // This Loops through and add models based on selected brand
         carModels[selectedBrand].forEach(model => {
             const option = document.createElement("option");
             option.value = model;
             option.textContent = model;
 
-            // Automatically select the model from the database
+           
             if (model === selectedModel) {
                 option.selected = true;
             }
@@ -419,11 +418,11 @@ foreach ($fields as $id => $label) {
     window.onload = updateModels;
     
 
-       // Place the Confirmation Popup Here 👇👇👇
+
        document.querySelector("form").onsubmit = function (event) {
         const confirmation = confirm("Are you sure you want to submit the data?");
         if (!confirmation) {
-            event.preventDefault(); // Stops the submission if user clicks Cancel
+            event.preventDefault(); 
         }
     };
 </script>

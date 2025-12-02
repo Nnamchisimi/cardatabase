@@ -1,19 +1,18 @@
 <?php
-// Include the database connection
+
 include('db_connection.php');
 
-// Check if 'edit_id' is passed in the URL
 if (isset($_GET['edit_id'])) {
     $edit_id = $_GET['edit_id'];
 
-    // Fetch the car details from the database based on the ID
+  
     $sql = "SELECT * FROM cars WHERE id = '$edit_id'";
     $result = $conn->query($sql);
 
-    // Check if the car exists
+    
     if ($result->num_rows > 0) {
         $row = $result->fetch_assoc();
-        // Extract car details into variables
+       
         $customer_name = $row['customer_name'];
         $plate = $row['plate'];
         $brand = $row['brand'];
@@ -33,17 +32,17 @@ if (isset($_GET['edit_id'])) {
         $image = $row['image'];
         $image2 = $row['image2'];
     } else {
-        // Redirect to the display page if the car is not found
+  
         header('Location: display.php');
         exit();
     }
 } else {
-    // Redirect to the display page if no edit ID is provided
+   
     header('Location: display.php');
     exit();
 }
 
-// Handle the form submission when the user updates the car details
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Get the data from the form
     $customer_name = $_POST['customer_name'];
@@ -63,7 +62,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $expense_detail = $_POST['expense_detail'];
     $current_expense = $_POST['current_expense'];
 
-    // Handle file uploads for images
     if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
         $image = $_FILES['image']['name'];
         $image_tmp = $_FILES['image']['tmp_name'];
@@ -78,11 +76,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         move_uploaded_file($image_tmp2, $image_folder2);
     }
 
-    // Update the car record in the database
+    
     $sql = "UPDATE cars SET customer_name = '$customer_name', plate = '$plate', brand = '$brand', model = '$model', km_mile = '$km_mile', accident_visual = '$accident_visual', accident_tramer = '$accident_tramer', msf = '$msf', dsf = '$dsf', package = '$package', color = '$color', engine = '$engine', gear = '$gear', fuel = '$fuel', expense_detail = '$expense_detail', current_total_expense = '$current_expense', image = '$image', image2 = '$image2' WHERE id = '$edit_id'";
 
     if ($conn->query($sql) === TRUE) {
-        // Redirect after successful update to display.php
+       
         header('Location: display.php');
         exit();
     } else {

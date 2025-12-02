@@ -28,7 +28,7 @@ foreach ($images as $imagePath) {
 
     $resizedImg = imagecreatetruecolor($targetWidth, $targetHeight);
 
-    // Optional: fill with white background (for transparent PNGs)
+ 
     $white = imagecolorallocate($resizedImg, 255, 255, 255);
     imagefill($resizedImg, 0, 0, $white);
 

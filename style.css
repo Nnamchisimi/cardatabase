@@ -8,13 +8,13 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    background-image: url('static\images\img2.jpg'); /* Path to your background image */
-    background-size: cover; /* Ensures the image covers the entire screen */
-    background-position: center center; /* Centers the image */
-    background-attachment: fixed; /* Keeps the image fixed when scrolling */
+    background-image: url('static\images\img2.jpg'); 
+    background-size: cover;
+    background-position: center center; 
+    background-attachment: fixed; 
 }
 
-/* Container settings */
+
 .container {
     width: 100%;
     height: 100vh;
@@ -23,14 +23,14 @@ body {
     align-items: center;
 }
 
-/* Home container (central content) */
+
 .home-container {
     text-align: center;
-    background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent white background */
+    background-color: rgba(255, 255, 255, 0.8); 
     padding: 40px;
     border-radius: 8px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    max-width: 500px; /* Ensure it doesn't stretch too wide */
+    max-width: 500px;
 }
 
 /* Header text */
@@ -40,14 +40,14 @@ h1 {
     color: #333;
 }
 
-/* Paragraph text */
+
 p {
     font-size: 1.2rem;
     margin-bottom: 30px;
     color: #666;
 }
 
-/* Button container styles */
+
 .button-container {
     display: flex;
     justify-content: center;
@@ -69,12 +69,12 @@ p {
 
 /* Add car button styles */
 .add-car-btn {
-    background-color: #4CAF50; /* Green for adding a car */
+    background-color: #4CAF50; 
 }
 
-/* View car details button styles */
+
 .view-cars-btn {
-    background-color: #2196F3; /* Blue for viewing car details */
+    background-color: #2196F3; 
 }
 
 /* Hover effects */
@@ -83,7 +83,7 @@ p {
     opacity: 0.9;
 }
 
-/* Responsive styles for mobile */
+
 @media (max-width: 768px) {
     h1 {
         font-size: 2rem;

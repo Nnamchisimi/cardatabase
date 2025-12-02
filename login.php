@@ -1,13 +1,13 @@
 <?php
 session_start();
-include('db_connection.php'); // Your database connection file
-// Check if the logout parameter is set in the URL
+include('db_connection.php'); 
+
 if (isset($_GET['logout']) && $_GET['logout'] == 'true') {
-    // Destroy the session to log the user out
+
     session_unset();
     session_destroy();
 
-    // Redirect the user to the login page after logging out
+  
     header("Location: login.php");
     exit();
 }
@@ -24,10 +24,10 @@ if (isset($_POST['login'])) {
     $user = $result->fetch_assoc();
 
     if ($user && password_verify($password, $user['password'])) {
-        // Start a session and set session variables for user data
+      
         $_SESSION['user_id'] = $user['user_id'];
         $_SESSION['username'] = $user['username'];
-        $_SESSION['role'] = $user['role'];  // Add role to the session
+        $_SESSION['role'] = $user['role']; 
 
         header('Location: home.php'); // Redirect to home.php after successful login
     } else {

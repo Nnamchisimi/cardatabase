@@ -2,35 +2,21 @@
 include('db_connection.php');
 session_start();
 
-// Check if the user is logged in
 if (!isset($_SESSION['user_id'])) {
-    // If the user is not logged in, display the message and a button to go back to login
-    echo '
-    <div style="text-align: center; margin-top: 50px; background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 20px; border-radius: 8px;">
-        <h2>You need to be logged in to view car details.</h2>
-        <p>Please log in first.</p>
-        <a href="login.php" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Go to Login</a>
-    </div>';
-    exit;  // Stop the script from executing further
+    header("Location: login.php");
+    exit;
 }
+
+
 $search_query = '';
 $search_terms = [];
-$year_filter = '';
-$model_filter = '';
-$brand_filter = '';
+$search_sql = '';
 
-// Default SQL query to fetch all cars
-$sql = "SELECT * FROM cars";
-
-// Check if the search query is set and not empty
 if (isset($_GET['search']) && !empty($_GET['search'])) {
-    $search_query = mysqli_real_escape_string($conn, $_GET['search']);  // sanitize input
-
-    // Normalize: remove hyphens, spaces, tabs, and trim
+    $search_query = mysqli_real_escape_string($conn, $_GET['search']);
     $search_query_cleaned = strtolower(str_replace([' ', '-', "\t", "\n", "\r"], '', $search_query));
     $search_terms = preg_split('/[\s\-]+/', strtolower(trim($search_query)));
 
-    // Fully normalized fields (no spaces, no hyphens, lowercase)
     $normalized_columns = [
         "LOWER(REPLACE(REPLACE(brand, ' ', ''), '-', ''))",
         "LOWER(REPLACE(REPLACE(model, ' ', ''), '-', ''))",
@@ -40,13 +26,11 @@ if (isset($_GET['search']) && !empty($_GET['search'])) {
         "LOWER(REPLACE(REPLACE(plate, ' ', ''), '-', ''))"
     ];
 
-    // Create OR conditions for full cleaned input
     $normalized_whole_match = [];
     foreach ($normalized_columns as $col) {
         $normalized_whole_match[] = "$col LIKE '%$search_query_cleaned%'";
     }
 
-    // Create AND conditions for each individual search term
     $normalized_term_clauses = [];
     foreach ($search_terms as $term) {
         $term_clauses = [];
@@ -56,18 +40,31 @@ if (isset($_GET['search']) && !empty($_GET['search'])) {
         $normalized_term_clauses[] = '(' . implode(' OR ', $term_clauses) . ')';
     }
 
-    // Override SQL with search-specific query
-    $sql = "SELECT * FROM cars WHERE (" . implode(' OR ', $normalized_whole_match) . ") OR (" . implode(' AND ', $normalized_term_clauses) . ")";
+    $search_sql = " WHERE (" . implode(' OR ', $normalized_whole_match) . ") OR (" . implode(' AND ', $normalized_term_clauses) . ")";
 }
 
-// ✅ Now execute the final SQL (default or overridden)
-$result = $conn->query($sql);
+//  Pagination Logic
+$results_per_page = 15;
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$page = max($page, 1);
+$offset = ($page - 1) * $results_per_page;
+
+//  Count total rows for pagination
+$count_sql = "SELECT COUNT(*) AS total FROM cars" . $search_sql;
+$count_result = mysqli_query($conn, $count_sql);
+$row_count = mysqli_fetch_assoc($count_result);
+$total_rows = $row_count['total'];
+$total_pages = ceil($total_rows / $results_per_page);
+
+// Fetch data for the current page
+$sql = "SELECT * FROM cars" . $search_sql . " ORDER BY created_at DESC LIMIT $results_per_page OFFSET $offset";
+$result = mysqli_query($conn, $sql);
 
 
-
-
+if (!$result) {
+    die("Error in query execution: " . mysqli_error($conn));
+}
 ?>
-
 
 
 
@@ -92,23 +89,65 @@ $result = $conn->query($sql);
         min-height: 100vh;
     }
 
-    header {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        position: sticky;
-        top: 0;
-        background-color: #212121; /* Darker header background for professionalism */
-        padding: 20px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
-        z-index: 10;
-    }
+    .header-with-actions {
+    background-color: #000000;
+    padding: 20px;
+    border-bottom: 2px solid #ccc;
+    font-family: Arial, sans-serif;
+}
 
-    .header-text {
-        font-size: 2.2rem;
-        font-weight: bold;
-        color: #e0d8d8;
-    }
+.header-with-actions h1 {
+    height: 10px;
+    margin: 0 0 10px 0;
+    font-size: 28px;
+    text-align: center;
+    color: white;
+}
+
+.header-row {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+}
+
+.page-title {
+    grid-column: 2;
+    margin: 0;
+    font-size: 20px;
+    text-align: center;
+    color: #444;
+}
+
+.action-links {
+    grid-column: 3;
+    justify-self: end;
+    display: flex;
+    gap: 15px;
+}
+
+.action-link {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+    color: #333;
+    font-weight: bold;
+    height: 30px;
+    width: 103px;
+}
+
+.action-link img {
+    height: 20px;
+    width: 20px;
+    margin-right: 6px;
+}
+        .action-links a {
+            text-decoration: none;
+            color: white;
+            padding: 10px 20px;
+            font-size: 1em;
+            border-radius: 5px;
+            transition: background-color 0.5s ease;
+        }
 
     .no-details {
         color: #212121;
@@ -140,72 +179,94 @@ $result = $conn->query($sql);
         transform: translateY(-2px);
     }
 
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 20px;
-        overflow-x: auto;
-        display: block;
-        max-height: 540px;
-        overflow-y: auto;
-    }
-    /* Add custom scroll bars inside table cells */
-td {
-    max-height: 100px; /* Ensure a fixed height for the cells */
-    overflow-y: auto; /* Scroll vertically inside the cell */
+   table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    display: block;
+    max-height: 600px;
+    overflow-y: auto;
 }
 
-/* Optional: Make text inside table cells scroll horizontally if it overflows */
-td {
-    white-space: nowrap; /* Prevent wrapping of long text */
-    text-overflow: ellipsis; /* Show ellipses for overflowed text */
-}
-.cell-content {
-    max-height: 100px;         /* Keeps cell height fixed */
-    overflow-y: auto;          /* Enables vertical scroll inside */
-    overflow-x: hidden;        /* Prevents horizontal scroll */
-    white-space: normal;       /* Allows text to wrap */
-    padding-right: 8px;
+/* Sticky table headers */
+th {
+    background-color: #f4f4f4;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    min-width: 105px;
+    font-weight: 600;
+    color: #333;
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: center;
+    font-size: 0.9rem;
 }
 
-    /* Styling the images in the table */
-  table img {
-      width: 200px;
-  height: 130px;
-  object-fit: fill;
-  border-radius: 15px;
-}
 
 td {
     border: 1px solid #ddd;
-    padding: 15px;
-    text-align: left;
-    font-size: 1rem;
-    height: 100px; /* Optionally, you can set a fixed height for your table cells */
+    padding: 2px 2px;
+    text-align: center;
+    font-size: 0.9rem;
+    vertical-align: middle;
+    height: 60px;
+    width: 10px;
+    max-height: 60px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 
-    th {
-        background-color: #f4f4f4;
-        position: sticky;
-        top: 0;
-        z-index: 2;
-        min-width: 200px;
-        font-weight: 600;
-        color: #333;
-        border: 1px solid #ddd;
-        padding: 15px;
-        text-align: left;
-        font-size: 1rem;
-    }
+tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+tr:nth-child(odd) {
+    background-color: #fff;
+}
 
-    tr:nth-child(even) {
-        background-color: #f9f9f9;
-    }
 
-    tr:nth-child(odd) {
-        background-color: #fff;
-    }
+.cell-content {
+    max-height: 60px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    white-space: normal;
+    padding-right: 8px;
+}
+
+
+table img {
+    width: 120px;
+    height: 60px;
+    object-fit: fill;
+    border-radius: 10px;
+}
+
+.pagination {
+       margin-top: 15px;
+    margin-bottom: 30px; 
+    text-align: center;
+}
+
+.pagination a {
+    color: #000000;
+    padding: 8px 12px;
+    text-decoration: none;
+    border: 1px solid #ddd;
+    margin: 2px;
+    border-radius: 5px;
+}
+
+.pagination a:hover {
+    background-color: #f0f0f0;
+}
+
+.pagination a.active {
+    background-color: #000000;
+    color: white;
+    border-color: #0000000;
+}
 
     footer {
         text-align: center;
@@ -271,7 +332,7 @@ td {
         box-shadow: 0 0 25px rgba(0, 0, 0, 0.2);
         width: 90%;
         max-width: 600px;
-        text-align: center;
+        text-align: Left;
         z-index: 9999;
         border-radius: 10px;
     }
@@ -286,15 +347,15 @@ td {
 }
 
     .popup p {
-    font-size: 12px; /* Set font size for the paragraph text */
-    line-height: 1; /* Improve readability */
-    margin-bottom: 1px; /* Space between the paragraphs */
+    font-size: 11px; 
+    line-height: 1; 
+    margin-bottom: 2px; 
 }
 .popup input[type="checkbox"] {
-    width: 8px;  /* Set the width of the checkbox */
-    height: 8px; /* Set the height of the checkbox */
-    transform: scale(1.5); /* Scale up the checkbox (optional, adjust value to your liking) */
-    margin-right: 1px; /* Optional: space between checkbox and label text */
+    width: 8px;  
+    height: 8px; 
+    transform: scale(1.5); 
+    margin-right: 1px; 
 }
 
 .popup-image-wrapper {
@@ -335,11 +396,10 @@ td {
         z-index: 9998;
     }
 
-    /* Styling the nav container */
     nav {
         display: flex;
         justify-content: center;
-        background-color: #333; /* Darker background for a more professional look */
+        background-color: #333; 
         padding: 20px 10;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         border-radius: 8px;
@@ -348,7 +408,7 @@ td {
         transition: all 0.3s ease;
     }
 
-    /* Styling the individual links in the nav */
+
     nav a {
         color: #f1f1f1;
         padding: 10px 10px;
@@ -362,7 +422,7 @@ td {
         transition: all 0.3s ease;
     }
 
-    /* Hover effect for navigation links */
+
     nav a:hover {
         background-color: #555;
         color: #fff;
@@ -370,7 +430,6 @@ td {
         box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
     }
 
-    /* Underline on hover */
     nav a:hover::after {
         content: "";
         position: absolute;
@@ -383,16 +442,89 @@ td {
     }
     
 
-    /* Active link style */
     nav a.active {
         background-color: #ff5722;
         color: #fff;
         font-weight: 700;
     }
 
+
+#filters-sort-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-button {
+    padding: 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+.dropdown-button:hover {
+    background-color: #0056b3;
+}
+
+
+.dropdown-content {
+    position: absolute;
+    background-color: white;
+    min-width: 200px;
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
+    z-index: 1;
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    padding: 10px;
+    z-index: 9999;
+}
+#filter-dropdowns {
+    position: absolute;
+  
+    background: white;
+    z-index: 9999;
+    border: 1px solid #ccc;
+    padding: 10px;
+    max-height: 400px;
+    overflow-y: auto;
+    width: 300px; 
+    display: none; 
+}
+
+
+.dropdown-content label {
+    display: block;
+    margin: 5px 0;
+}
+
+.dropdown-content input {
+    margin-right: 5px;
+}
+
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+
+#sort-select {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+
     
 
-    /* Responsive Design for Mobile */
+
     @media (max-width: 768px) {
         nav {
             flex-direction: column;
@@ -407,7 +539,7 @@ td {
             text-align: center;
         }
 
-        /* Add hamburger icon for mobile screens */
+
         .hamburger {
             display: block;
             color: #fff;
@@ -439,10 +571,10 @@ td {
         .form-group {
             width: 100%;
         }
-        /* Styling for the icons */
+
         .edit-icon, .delete-icon {
-            font-size: 22px; /* Larger icon size */
-            margin-right: 8px; /* Space between icon and text */
+            font-size: 22px; 
+            margin-right: 8px; 
         }
 
         .arrow {
@@ -472,7 +604,7 @@ td {
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
-    overflow-x: auto; /* In case the table overflows */
+    overflow-x: auto;
 }
 
     }
@@ -480,16 +612,31 @@ td {
 
 </head>
 <body>
-    <header>
-        <h1 class="header-text">Serhan Kombos Otomotiv</h1>
+<header class="header-with-actions">
+    <h1>SERHAN KOMBOS OTOMOTIV</h1>
+
+    <div class="header-row">
+        <div class="action-links">
+
         <nav>
-        <a href="home.php">Home</a>
-        <a href="index.php">Add Car</a>
-    </nav>
-    </header>
+            <a href="index.php" class="action-link">
+                <img src="add.png" alt="Add Icon">
+                Add cars
+            </a>
+            </nav>
+            <nav>
+            <a href="home.php" class="action-link">
+                <img src="homw.png" alt="Home Icon">
+                Home
+            </a>
+            </nav>
+          
+        </div>
+    </div>
+</header>
 
     <div class="container">
-        <!-- Search Form -->
+       
         <form method="GET" action="display.php" class="search-form">
             <div class="form-group">
                 <label for="search">Search: </label>
@@ -497,17 +644,39 @@ td {
                 <input type="submit" value="Search" class="btn btn-primary">
             </div>
         </form>
-<!-- Add buttons to sort the table -->
-<div class="sort-buttons">
-    <button onclick="sortTable('created_at', 'asc')">Sort by Created At (Oldest to Newest)</button>
-    <button onclick="sortTable('created_at', 'desc')">Sort by Created At (Newest to Oldest)</button>
-    <button onclick="sortTable('updated_at', 'asc')">Sort by Updated At (Oldest to Newest)</button>
-    <button onclick="sortTable('updated_at', 'desc')">Sort by Updated At (Newest to Oldest)</button>
+
+<div id="filters-sort-container" style="position: relative; margin-bottom: 20px;">
+ 
+    <div class="dropdown">
+        <button class="dropdown-button" id="filter-toggle" onclick="toggleFilters()">+ Show Filters</button>
+        <div id="filter-dropdowns" style="display: none; margin-top: 10px; border: 1px solid #ccc; padding: 10px; background: #fff; max-height: 400px; overflow-y: auto;">
+      
+            <div id="filter-container"></div>
+            <button type="button" id="clear-filters" onclick="clearFilters()" style="margin-top: 10px; padding: 5px 10px; background-color: red; color: white; border: none;">Clear Filters</button>
+        </div>
+    </div>
+
+
+<div class="dropdown">
+    <label for="sort-select">Sort by:</label>
+    <select id="sort-select" onchange="handleSortChange()">
+        <option value="">-- Select Sorting Option --</option>
+
+        <option value="Created at-asc">Created At (Oldest to Newest)</option>
+        <option value="Created at-desc">Created At (Newest to Oldest)</option>
+
+        <option value="Updated at-asc">Updated At (Oldest to Newest)</option>
+        <option value="Updated at-desc">Updated At (Newest to Oldest)</option>
+
+        <option value="Customer Name-asc">Customer Name (A → Z)</option>
+        <option value="Customer Name-desc">Customer Name (Z → A)</option>
+    </select>
+</div>
+
 </div>
 
         
 
-        <!-- Display Success/Error Message -->
         <?php if (isset($success_message)): ?>
             <p class="success-message"><?php echo $success_message; ?></p>
         <?php elseif (isset($error_message)): ?>
@@ -522,16 +691,15 @@ td {
                     <tr>
                         <th>Image</th>
                         
-
-                        <th>Customer Name</th>
                         <th>Plate</th>
-                        <th>Chasis</th>
-                        <th>Brand</th>
                         <th>Year</th>
+                         <th>Brand</th>
                         <th>Model</th>
-                        <th>Mile/KM</th>
+                         <th>Mile/KM</th>
                         <th>Accident Visual</th>
                         <th>Accident Tramer</th>
+                         <th>Customer Name</th>
+                          <th>Chasis</th>
                         <th>MSF</th>
                         <th>DSF</th>
                         <th>GSF</th>
@@ -546,29 +714,36 @@ td {
                         <th>Updated at</th>
                         <th>Created by</th>
                         <th>Updated by</th>
-                         <!-- New column for image -->
+                       
+                       
+                       
+                       
+                       
+                       
+                      
                     </tr>
                 </thead>
                 <tbody>
                 <?php
 while($row = $result->fetch_assoc()) {
-    // Check if an image is uploaded for the car
+   
     $image_path = $row['image'] ? 'uploads/' . $row['image'] : 'uploads/default.jpg'; // Default image if none is uploaded
-    $image_path2 = $row['image2'] ? 'uploads/' . $row['image2'] : 'uploads/default.jpg'; // Default image2 if none is uploaded
-    $image_path3 = $row['image3'] ? 'uploads/' . $row['image3'] : 'uploads/default.jpg'; // Default image3 if none is uploaded
-    $image_path4 = $row['image4'] ? 'uploads/' . $row['image4'] : 'uploads/default.jpg'; // Default image4 if none is uploaded
+    $image_path2 = $row['image2'] ? 'uploads/' . $row['image2'] : 'uploads/default.jpg';
+    $image_path3 = $row['image3'] ? 'uploads/' . $row['image3'] : 'uploads/default.jpg'; 
+    $image_path4 = $row['image4'] ? 'uploads/' . $row['image4'] : 'uploads/default.jpg'; 
 
     echo "<tr>
         <td><img src='" . $image_path . "' onclick='showDetails(\"" . $row['customer_name'] . "\", \"" . $row['plate'] . "\", \"" . $row['chasis'] . "\", \"" . $row['brand'] . "\", \"" . $row['year'] . "\", \"" . $row['model'] . "\", \"" . $row['km_mile'] . "\", \"" . $row['accident_visual'] . "\", \"" . $row['accident_tramer'] . "\", \"" . $row['msf'] . "\", \"" . $row['dsf'] . "\", \"" . $row['gsf'] . "\", \"" . $row['package'] . "\", \"" . $row['color'] . "\", \"" . $row['engine'] . "\", \"" . $row['gear'] . "\", \"" . $row['fuel'] . "\", \"" . $row['expense_detail'] . "\", \"" . $row['current_total_expense'] . "\", \"" . $image_path . "\", \"" . $image_path2 . "\", \"" . $image_path3 . "\", \"" . $image_path4 . "\", \"" . $row['created_at'] . "\", \"" . $row['updated_at'] . "\", \"" . $row['created_by'] . "\", \"" . $row['updated_by'] . "\")'></td>
-        <td>" . $row['customer_name'] . "</td>
+         
         <td>" . $row['plate'] . "</td>
-        <td>" . substr($row['chasis'], 0, 7) . "</td>
-        <td>" . $row['brand'] . "</td>
         <td>" . $row['year'] . "</td>
+        <td>" . $row['brand'] . "</td>
         <td>" . $row['model'] . "</td>
         <td>" . $row['km_mile'] . "</td>
         <td>" . $row['accident_visual'] . "</td>
         <td>" . $row['accident_tramer'] . "</td>
+        <td>" . $row['customer_name'] . "</td>
+        <td>" . substr($row['chasis'], 0, 7) . "</td>
         <td>" . $row['msf'] . "</td>
         <td>" . $row['dsf'] . "</td>
         <td>" . $row['gsf'] . "</td>
@@ -583,6 +758,9 @@ while($row = $result->fetch_assoc()) {
         <td data-column='updated_at'>" . $row['updated_at'] . "</td>
         <td>" . $row['created_by'] . "</td>
         <td>" . $row['updated_by'] . "</td>
+      
+      
+        
         <td><a href='index.php?edit_id=" . $row['id'] . "' class='btn btn-edit'>Edit</a></td>
         <td><a href='delete.php?id=" . $row['id'] . "' class='btn btn-delete' onclick=\"return confirm('Are you sure you want to delete this record?');\">Delete</a></td>
     </tr>";
@@ -595,9 +773,6 @@ while($row = $result->fetch_assoc()) {
         <?php else: ?>
             <p class="no-details">No cars found</p>
         <?php endif; ?>
-        
-        <!-- Back Button -->
-        <a href="home.php" class="back-button">Back to Home</a>
     </div>
 
     <div class="overlay" id="overlay" onclick="closePopup()"></div>
@@ -605,8 +780,8 @@ while($row = $result->fetch_assoc()) {
     <div class="popup" id="popup">
     <div class="popup-image-wrapper" style="position: relative;">
         <!-- Print Button -->
-        <button onclick="printPopup()" title="Print" style="position: absolute; top: 0px; right: 5px; background: none; border: none; cursor: pointer;">
-    <img src="uploads/pi.jpg" alt="Print" style="width: 35px; height: 35px;">
+        <button onclick="printPopup()" title="Print" style="position: absolute; top: 0px; right: 10px; background: none; border: none; cursor: pointer;">
+    <img src="uploads/printing.png" alt="Print" style="width: 20px; height: 20px;">
     </button>
 
         <!-- Image Navigation -->
@@ -616,7 +791,7 @@ while($row = $result->fetch_assoc()) {
     </div>
 
 
-    <!-- Select All Checkbox -->
+
 <p>
   <label>
     <input type="checkbox" id="select-all-checkbox">
@@ -657,17 +832,33 @@ while($row = $result->fetch_assoc()) {
 
 </div>
 
+
+<div class="pagination">
+    <?php if ($page > 1) : ?>
+        <a href="?search=<?= urlencode($search_query) ?>&page=<?= $page - 1 ?>">Previous</a>
+    <?php endif; ?>
+
+    <?php for ($i = 1; $i <= $total_pages; $i++) : ?>
+        <?php if ($i == $page) : ?>
+            <a class="active" href="?search=<?= urlencode($search_query) ?>&page=<?= $i ?>"><?= $i ?></a>
+        <?php else : ?>
+            <a href="?search=<?= urlencode($search_query) ?>&page=<?= $i ?>"><?= $i ?></a>
+        <?php endif; ?>
+    <?php endfor; ?>
+
+    <?php if ($page < $total_pages) : ?>
+        <a href="?search=<?= urlencode($search_query) ?>&page=<?= $page + 1 ?>">Next</a>
+    <?php endif; ?>
+</div>
+
+
     <footer>
         <p>&copy; 2025 Serhan Kombos Otomotiv</p>
     </footer>
 
 
-    <script>
-  document.getElementById('select-all-checkbox').addEventListener('change', function () {
-    const checkboxes = document.querySelectorAll('.print-checkbox');
-    checkboxes.forEach(cb => cb.checked = this.checked);
-  });
-</script>
+    
+    
     <script>
                    let imageIndex = 0;
                     let images = [];
@@ -716,34 +907,234 @@ while($row = $result->fetch_assoc()) {
                         imageIndex = (imageIndex - 1 + images.length) % images.length;
                         document.getElementById('popup-img').src = images[imageIndex];
                     }
+                    let originalRows = [];
+let currentSort = { column: null, order: null };
+let activeFilters = {};
 
-                      // Function to sort the table
-    function sortTable(column, order) {
-        let table = document.querySelector('table tbody');
-        let rows = Array.from(table.rows);
-        
-        rows.sort((rowA, rowB) => {
-            let cellA = rowA.querySelector(`td[data-column="${column}"]`).innerText;
-            let cellB = rowB.querySelector(`td[data-column="${column}"]`).innerText;
-            
-            // Convert the text into Date objects for comparison
-            let dateA = new Date(cellA);
-            let dateB = new Date(cellB);
-            
-            // Handle ascending or descending order
-            if (order === 'asc') {
-                return dateA - dateB;
-            } else {
-                return dateB - dateA;
-            }
+window.addEventListener('DOMContentLoaded', () => {
+    const table = document.querySelector('table tbody');
+    originalRows = Array.from(table.rows);
+
+    // Sort by Created at (newest first) on page load
+    sortTableByCreatedAtDescending();
+    
+    // Update originalRows to reflect the sorted state
+    originalRows = Array.from(document.querySelector('table tbody').rows);
+    
+
+    const headers = [
+        "Customer Name", "Plate", "Chasis", "Brand", "Year", "Model", "Mile/KM",
+        "Accident Visual", "Accident Tramer", "MSF", "DSF", "GSF", "Package",
+        "Color", "Engine", "Gear", "Fuel", "Created at", "Updated at", "Created by", "Updated by"
+    ];
+
+    const columnIndexMap = {
+        "Created at": 1, "Updated at": 2, "Created by": 3, "Updated by": 4, "Customer Name": 5,
+        "Plate": 6, "Chasis": 7, "Brand": 8, "Year": 9, "Model": 10, "Mile/KM": 11,
+        "Accident Visual": 12, "Accident Tramer": 13, "MSF": 14, "DSF": 15, "GSF": 16,
+        "Package": 17, "Color": 18, "Engine": 19, "Gear": 20, "Fuel": 21, "Expense Detail": 22,
+        "Current Total Expense": 23
+    };
+
+    const filterContainer = document.getElementById('filter-container');
+
+    headers.forEach(header => {
+        const colIndex = columnIndexMap[header];
+        const uniqueValues = new Set(originalRows.map(row => row.cells[colIndex]?.innerText.trim()));
+
+        const wrapper = document.createElement('div');
+        wrapper.style.marginBottom = '10px';
+
+        const toggle = document.createElement('button');
+        toggle.textContent = '+ ' + header;
+        toggle.type = 'button';
+        toggle.style.display = 'block';
+        toggle.style.marginBottom = '5px';
+
+        const checkboxContainer = document.createElement('div');
+        checkboxContainer.style.display = 'none';
+        checkboxContainer.style.marginLeft = '10px';
+
+        const clearButton = document.createElement('label');
+        clearButton.style.display = 'block';
+        clearButton.innerHTML = `<input type="checkbox" data-column="${colIndex}" value="clear-all" class="clear-all"> − Uncheck All`;
+
+        checkboxContainer.appendChild(clearButton);
+
+        uniqueValues.forEach(value => {
+            const label = document.createElement('label');
+            label.style.display = 'block';
+            label.innerHTML = `<input type="checkbox" data-column="${colIndex}" value="${value}" checked> ${value}`;
+            checkboxContainer.appendChild(label);
         });
 
-        // Reattach sorted rows to the table body
-        rows.forEach(row => table.appendChild(row));
+        toggle.addEventListener('click', () => {
+            checkboxContainer.style.display = checkboxContainer.style.display === 'none' ? 'block' : 'none';
+            toggle.textContent = (checkboxContainer.style.display === 'none' ? '+ ' : '− ') + header;
+        });
+
+        clearButton.querySelector('input').addEventListener('change', (e) => {
+            const checkboxes = checkboxContainer.querySelectorAll('input[type="checkbox"]:not(.clear-all)');
+            if (e.target.checked) {
+          
+                checkboxes.forEach(checkbox => checkbox.checked = false);
+            } else {
+          
+                checkboxes.forEach(checkbox => checkbox.checked = true);
+            }
+            applyFilters(); // Apply the filter changes after unchecking/adding
+        });
+
+        wrapper.appendChild(toggle);
+        wrapper.appendChild(checkboxContainer);
+        filterContainer.appendChild(wrapper);
+    });
+
+    document.querySelectorAll('#filter-container input[type="checkbox"]').forEach(cb => {
+        cb.addEventListener('change', applyFilters);
+    });
+});
+
+
+function getColumnIndexByHeader(headerName) {
+    const headers = document.querySelectorAll('table thead th');
+    for (let i = 0; i < headers.length; i++) {
+        if (headers[i].innerText.trim().toLowerCase() === headerName.toLowerCase()) {
+            return i;
+        }
+    }
+    console.error(`Header "${headerName}" not found.`);
+    return -1;
+}
+
+
+function sortTableByCreatedAtDescending() {
+    const columnIndex = getColumnIndexByHeader('Created at');
+    if (columnIndex === -1) return; 
+
+    const table = document.querySelector('table tbody');
+    const rows = Array.from(table.rows);
+
+    rows.sort((a, b) => {
+        const createdAtA = new Date(a.cells[columnIndex].innerText.trim());
+        const createdAtB = new Date(b.cells[columnIndex].innerText.trim());
+        return createdAtB - createdAtA; 
+    });
+
+    rows.forEach(row => table.appendChild(row));
+}
+
+// Generic sort handler
+function handleSortChange() {
+    const select = document.getElementById('sort-select');
+    const value = select.value;
+
+    if (!value) {
+        applyFilters(); 
+        return;
     }
 
+    const [header, order] = value.split('-');
+    const columnIndex = getColumnIndexByHeader(header);
+    if (columnIndex === -1) return;
+
+    const table = document.querySelector('table tbody');
+    const rows = Array.from(table.rows);
+
+    rows.sort((a, b) => {
+        const textA = a.cells[columnIndex]?.innerText.trim();
+        const textB = b.cells[columnIndex]?.innerText.trim();
+
+      
+        const dateA = new Date(textA);
+        const dateB = new Date(textB);
+
+        const isDate = !isNaN(dateA) && !isNaN(dateB);
+
+        if (isDate) {
+            return order === 'asc' ? dateA - dateB : dateB - dateA;
+        } else {
+     
+            return order === 'asc' 
+                ? textA.localeCompare(textB, undefined, {numeric: true})
+                : textB.localeCompare(textA, undefined, {numeric: true});
+        }
+    });
+
+    rows.forEach(row => table.appendChild(row));
+}
+
+function applyFilters() {
+    const checkboxes = document.querySelectorAll('#filter-container input[type="checkbox"]:not(.clear-all)');
+    const filters = {};
+
+    checkboxes.forEach(cb => {
+        const col = cb.dataset.column;
+        if (!filters[col]) filters[col] = new Set();
+        if (cb.checked) filters[col].add(cb.value);
+    });
+
+    const table = document.querySelector('table tbody');
+    table.innerHTML = "";
+
+    originalRows.forEach(row => {
+        let show = true;
+        for (const col in filters) {
+            const cellValue = row.cells[col]?.innerText.trim();
+            if (!filters[col].has(cellValue)) {
+                show = false;
+                break;
+            }
+        }
+        if (show) table.appendChild(row);
+    });
+}
+
+
+function toggleFilters() {
+    const filterDropdown = document.getElementById('filter-dropdowns');
+    const filterButton = document.getElementById('filter-toggle');
+
+    if (filterDropdown.style.display === 'none' || filterDropdown.style.display === '') {
+        filterDropdown.style.display = 'block';
+        filterButton.textContent = '− Hide Filters';
+    } else {
+        filterDropdown.style.display = 'none';
+        filterButton.textContent = '+ Show Filters';
+    }
+}
+
+function clearFilters() {
+
+    document.querySelectorAll('#filter-container input[type="checkbox"]:not(.clear-all)').forEach(cb => {
+        cb.checked = true; 
+    });
+
+   
+    const sortSelect = document.getElementById('sort-select');
+    sortSelect.value = ""; 
+
+  
+    applyFilters();
+}
+
+
+const filterDropdown = document.getElementById('filter-dropdowns');
+const filterButton = document.getElementById('filter-toggle');
+
+document.addEventListener('click', function(event) {
+    if (!filterDropdown.contains(event.target) && event.target !== filterButton) {
+        filterDropdown.style.display = 'none';  
+        filterButton.textContent = '+ Show Filters';  
+    }
+});
+
+
+
+
+
         function closePopup() {
-            // Hide the overlay and popup
+           
             document.getElementById('overlay').style.display = 'none';
             document.getElementById('popup').style.display = 'none';
         }
@@ -751,36 +1142,34 @@ while($row = $result->fetch_assoc()) {
         function toggleImageSize() {
             var img = document.getElementById('popup-img');
             if (img.style.width === '50%') {
-                img.style.width = '250px'; // Larger size
+                img.style.width = '250px'; 
             } else {
-                img.style.width = '50%'; // Default size
+                img.style.width = '50%'; 
             }
         }
 
         function printPopup() {
+            
     const popup = document.getElementById("popup");
 
-    // Clone the popup so we don't modify the actual DOM
     const clone = popup.cloneNode(true);
 
-    // Remove all unchecked detail lines
     const checkboxes = clone.querySelectorAll(".print-checkbox");
     checkboxes.forEach(checkbox => {
         if (!checkbox.checked) {
             checkbox.closest("p")?.remove();
         } else {
-            checkbox.style.display = "none"; // hide checkbox in print
+            checkbox.style.display = "none";
         }
     });
 
-    // ✅ Remove the "Select All" checkbox (if present)
+ 
     const selectAll = clone.querySelector('#select-all-checkbox');
     if (selectAll) {
         const selectAllRow = selectAll.closest('p');
         if (selectAllRow) selectAllRow.remove();
     }
 
-    // Remove buttons/arrows from the print view
     clone.querySelectorAll(".arrow, button").forEach(el => el.style.display = "none");
 
     const popupImg = document.getElementById("popup-img");
@@ -816,7 +1205,7 @@ while($row = $result->fetch_assoc()) {
     printWindow.document.close();
     printWindow.focus();
     printWindow.print();
-    printWindow.close();
+   
 }
 
 

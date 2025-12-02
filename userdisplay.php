@@ -2,27 +2,19 @@
 include('db_connection.php');
 session_start();
 
-// Check if the user is logged in
 if (!isset($_SESSION['user_id'])) {
-    // If the user is not logged in, display the message and a button to go back to login
-    echo '
-    <div style="text-align: center; margin-top: 50px; background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 20px; border-radius: 8px;">
-        <h2>You need to be logged in to view car details.</h2>
-        <p>Please log in first.</p>
-        <a href="login.php" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Go to Login</a>
-    </div>';
-    exit;  // Stop the script from executing further
+    header("Location: login.php");
+    exit;
 }
 
 
 
-// Initialize variables
 $search_query = '';
 
 // Check if the search query is set in the URL
 if (isset($_GET['search'])) {
-    $search_query = mysqli_real_escape_string($conn, $_GET['search']);  // sanitize input
-    // Remove spaces and hyphens from the search query
+    $search_query = mysqli_real_escape_string($conn, $_GET['search']);  
+    
     $search_query_cleaned = str_replace([' ', '-'], '', $search_query);
     
     // Search across plate, chasis, and customer_name columns
@@ -66,7 +58,7 @@ if (!$result) {
         justify-content: center;
         position: sticky;
         top: 0;
-        background-color: #212121; /* Darker header background for professionalism */
+        background-color: #212121; 
         padding: 20px;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
         z-index: 10;
