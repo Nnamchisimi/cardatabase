@@ -16,7 +16,7 @@ if (isset($_POST['login'])) {
     $username = $_POST['username'];
     $password = $_POST['password'];
 
-    // Check if the username exists in the database
+    // To Check if the username exists in the database
     $stmt = $conn->prepare("SELECT * FROM users WHERE username = ?");
     $stmt->bind_param("s", $username);
     $stmt->execute();
@@ -54,7 +54,7 @@ if (isset($_POST['login'])) {
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            background-image: url('static/images/vl6967y3.png'); /* Update this to your background image */
+            background-image: url('static/images/vl6967y3.png'); 
             background-size: cover;
             background-position: center center;
             background-attachment: fixed;
